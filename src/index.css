@@ -36,23 +36,40 @@ All colors MUST be HSL.
     --input: 0 0% 94%;
     --ring: 42 44% 58%;
 
-    /* Casino Theme Colors */
+    /* Casino Theme Colors - Luxury Edition */
     --casino-gold: 42 44% 58%;
     --casino-gold-light: 42 55% 70%;
     --casino-gold-dark: 42 35% 45%;
-    --casino-charcoal: 0 0% 25%;
-    --casino-charcoal-light: 0 0% 35%;
+    --casino-gold-bright: 45 100% 70%;
+    --casino-charcoal: 220 9% 15%;
+    --casino-charcoal-light: 220 9% 25%;
+    --casino-emerald: 158 64% 52%;
+    --casino-ruby: 348 83% 47%;
+    --casino-platinum: 0 0% 85%;
     
-    /* Gradients */
-    --gradient-gold: linear-gradient(135deg, hsl(var(--casino-gold)), hsl(var(--casino-gold-light)));
+    /* Luxury Gradients */
+    --gradient-gold: linear-gradient(135deg, hsl(var(--casino-gold-bright)), hsl(var(--casino-gold)));
+    --gradient-gold-radial: radial-gradient(ellipse at center, hsl(var(--casino-gold-bright) / 0.2), transparent);
+    --gradient-casino-primary: linear-gradient(135deg, hsl(var(--casino-gold-light)), hsl(var(--casino-gold)), hsl(var(--casino-gold-dark)));
     --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-dark: linear-gradient(135deg, hsl(var(--casino-charcoal)), hsl(220 9% 12%));
+    --gradient-ambient-day: linear-gradient(180deg, hsl(45 100% 98%), hsl(42 44% 98%));
+    --gradient-ambient-evening: linear-gradient(180deg, hsl(348 83% 98%), hsl(42 44% 98%));
+    --gradient-ambient-night: linear-gradient(180deg, hsl(220 9% 98%), hsl(158 64% 98%));
     
-    /* Shadows */
-    --shadow-gold: 0 4px 20px hsl(var(--casino-gold) / 0.15);
-    --shadow-elegant: 0 2px 8px hsl(0 0% 0% / 0.08);
+    /* Luxury Shadows & Effects */
+    --shadow-elegant: 0 8px 32px -8px hsl(220 9% 15% / 0.12);
+    --shadow-gold: 0 8px 32px -8px hsl(var(--casino-gold) / 0.4);
+    --shadow-gold-glow: 0 0 40px hsl(var(--casino-gold-bright) / 0.3);
+    --shadow-card-luxury: 0 12px 48px -12px hsl(220 9% 15% / 0.15), 0 0 0 1px hsl(var(--casino-gold) / 0.1);
+    --shadow-floating: 0 20px 64px -16px hsl(220 9% 15% / 0.2);
+    --shadow-inset-gold: inset 0 1px 0 hsl(var(--casino-gold-bright) / 0.2);
     
-    /* Animations */
+    /* Luxury Animations */
+    --transition-luxury: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-quick: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
@@ -119,5 +136,148 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
+  /* Luxury Typography */
+  .casino-heading {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Luxury Card Styles */
+  .card-luxury {
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--card) / 0.98));
+    border: 1px solid hsl(var(--casino-gold) / 0.1);
+    box-shadow: var(--shadow-card-luxury);
+    backdrop-filter: blur(8px);
+    transition: var(--transition-luxury);
+  }
+  
+  .card-luxury:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-floating), var(--shadow-gold-glow);
+    border-color: hsl(var(--casino-gold) / 0.3);
+  }
+  
+  /* 3D Button Effects */
+  .btn-luxury {
+    background: var(--gradient-casino-primary);
+    border: 1px solid hsl(var(--casino-gold-dark));
+    box-shadow: var(--shadow-gold), var(--shadow-inset-gold);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition-luxury);
+  }
+  
+  .btn-luxury::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(var(--casino-gold-bright) / 0.4), transparent);
+    transition: left 0.6s ease;
+  }
+  
+  .btn-luxury:hover::before {
+    left: 100%;
+  }
+  
+  .btn-luxury:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-floating), var(--shadow-gold-glow);
+  }
+  
+  .btn-luxury:active {
+    transform: translateY(0);
+  }
+  
+  /* Micro-animations */
+  @keyframes chip-clink {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-2px) rotate(1deg); }
+    75% { transform: translateY(-1px) rotate(-0.5deg); }
+  }
+  
+  @keyframes card-flip {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0deg); }
+  }
+  
+  @keyframes slot-spin {
+    0% { transform: translateY(0); }
+    25% { transform: translateY(-10px); }
+    50% { transform: translateY(0); }
+    75% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+  }
+  
+  @keyframes gold-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  
+  @keyframes ambient-pulse {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.3; }
+  }
+  
+  /* Interactive Elements */
+  .chip-animation:hover {
+    animation: chip-clink 0.6s ease-in-out;
+  }
+  
+  .card-animation:hover {
+    animation: card-flip 0.8s ease-in-out;
+  }
+  
+  .slot-animation:hover {
+    animation: slot-spin 1s ease-in-out;
+  }
+  
+  .gold-shimmer {
+    background: linear-gradient(45deg, hsl(var(--casino-gold)) 0%, hsl(var(--casino-gold-bright)) 50%, hsl(var(--casino-gold)) 100%);
+    background-size: 200% 100%;
+    animation: gold-shimmer 2s linear infinite;
+  }
+  
+  /* Ambient Lighting */
+  .ambient-day {
+    background: var(--gradient-ambient-day);
+  }
+  
+  .ambient-evening {
+    background: var(--gradient-ambient-evening);
+  }
+  
+  .ambient-night {
+    background: var(--gradient-ambient-night);
+  }
+  
+  /* Luxury Status Indicators */
+  .status-live {
+    position: relative;
+  }
+  
+  .status-live::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -12px;
+    width: 8px;
+    height: 8px;
+    background: hsl(var(--casino-emerald));
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: ambient-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 12px hsl(var(--casino-emerald) / 0.6);
   }
 }

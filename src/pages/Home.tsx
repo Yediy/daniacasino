@@ -33,90 +33,91 @@ export const Home = () => {
       <div className="max-w-md mx-auto px-4 space-y-6">
         {/* Welcome Section */}
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-casino-charcoal">
+          <h2 className="text-3xl font-bold casino-heading">
             Welcome to Dania Beach
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-lg">
             {today}
           </p>
         </div>
 
         {/* Live Status Banner */}
-        <div className="bg-gradient-gold p-4 rounded-lg shadow-gold">
-          <div className="flex items-center justify-between text-primary-foreground">
+        <div className="bg-gradient-casino-primary p-4 rounded-lg shadow-gold-glow relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-gold-radial opacity-50"></div>
+          <div className="relative flex items-center justify-between text-primary-foreground">
             <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="font-medium">Live DJs Tonight</span>
+              <div className="w-3 h-3 bg-casino-emerald rounded-full animate-ambient-pulse shadow-gold-glow" />
+              <span className="font-bold status-live pl-4">Live DJs Tonight</span>
             </div>
-            <span className="text-sm">Fri-Sat 8-11 PM</span>
+            <span className="text-sm font-medium">Fri-Sat 8-11 PM</span>
           </div>
         </div>
 
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-2 gap-4">
-          <Card className="shadow-elegant hover:shadow-gold transition-all duration-300 cursor-pointer">
+          <Card className="card-luxury chip-animation cursor-pointer">
             <CardHeader className="pb-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <Calendar className="h-5 w-5 text-primary" />
+              <div className="w-12 h-12 bg-gradient-casino-primary rounded-xl flex items-center justify-center mb-2 shadow-gold">
+                <Calendar className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle className="text-sm font-semibold">Tonight at Stage 954</CardTitle>
+              <CardTitle className="text-sm font-bold text-casino-charcoal">Tonight at Stage 954</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 Live entertainment and events
               </p>
-              <Badge variant="secondary" className="mt-2 text-xs">
+              <Badge variant="secondary" className="text-xs bg-casino-emerald/10 text-casino-emerald border-casino-emerald/20">
                 2 Shows Tonight
               </Badge>
             </CardContent>
           </Card>
 
-          <Card className="shadow-elegant hover:shadow-gold transition-all duration-300 cursor-pointer">
+          <Card className="card-luxury card-animation cursor-pointer">
             <CardHeader className="pb-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <Spade className="h-5 w-5 text-primary" />
+              <div className="w-12 h-12 bg-gradient-casino-primary rounded-xl flex items-center justify-center mb-2 shadow-gold">
+                <Spade className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle className="text-sm font-semibold">Poker Room</CardTitle>
+              <CardTitle className="text-sm font-bold text-casino-charcoal">Poker Room</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 Tables, tournaments & schedule
               </p>
-              <Badge variant="outline" className="mt-2 text-xs">
+              <Badge variant="outline" className="text-xs border-casino-gold text-casino-gold">
                 Open Now
               </Badge>
             </CardContent>
           </Card>
 
-          <Card className="shadow-elegant hover:shadow-gold transition-all duration-300 cursor-pointer">
+          <Card className="card-luxury chip-animation cursor-pointer">
             <CardHeader className="pb-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <Gift className="h-5 w-5 text-primary" />
+              <div className="w-12 h-12 bg-gradient-casino-primary rounded-xl flex items-center justify-center mb-2 shadow-gold">
+                <Gift className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle className="text-sm font-semibold">Promotions</CardTitle>
+              <CardTitle className="text-sm font-bold text-casino-charcoal">Promotions</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 Current offers and deals
               </p>
-              <Badge variant="secondary" className="mt-2 text-xs">
+              <Badge variant="secondary" className="text-xs bg-casino-ruby/10 text-casino-ruby border-casino-ruby/20">
                 5 Active
               </Badge>
             </CardContent>
           </Card>
 
-          <Card className="shadow-elegant hover:shadow-gold transition-all duration-300 cursor-pointer">
+          <Card className="card-luxury slot-animation cursor-pointer">
             <CardHeader className="pb-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mb-2">
-                <Utensils className="h-5 w-5 text-primary" />
+              <div className="w-12 h-12 bg-gradient-casino-primary rounded-xl flex items-center justify-center mb-2 shadow-gold">
+                <Utensils className="h-6 w-6 text-primary-foreground" />
               </div>
-              <CardTitle className="text-sm font-semibold">Dining</CardTitle>
+              <CardTitle className="text-sm font-bold text-casino-charcoal">Dining</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 Restaurants and menus
               </p>
-              <Badge variant="outline" className="mt-2 text-xs">
+              <Badge variant="outline" className="text-xs border-casino-gold text-casino-gold">
                 Now Open
               </Badge>
             </CardContent>

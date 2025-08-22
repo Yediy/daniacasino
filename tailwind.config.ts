@@ -56,8 +56,12 @@ export default {
 					gold: 'hsl(var(--casino-gold))',
 					'gold-light': 'hsl(var(--casino-gold-light))',
 					'gold-dark': 'hsl(var(--casino-gold-dark))',
+					'gold-bright': 'hsl(var(--casino-gold-bright))',
 					charcoal: 'hsl(var(--casino-charcoal))',
-					'charcoal-light': 'hsl(var(--casino-charcoal-light))'
+					'charcoal-light': 'hsl(var(--casino-charcoal-light))',
+					emerald: 'hsl(var(--casino-emerald))',
+					ruby: 'hsl(var(--casino-ruby))',
+					platinum: 'hsl(var(--casino-platinum))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
@@ -72,14 +76,26 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-gold': 'var(--gradient-gold)',
-				'gradient-subtle': 'var(--gradient-subtle)'
+				'gradient-gold-radial': 'var(--gradient-gold-radial)',
+				'gradient-casino-primary': 'var(--gradient-casino-primary)',
+				'gradient-subtle': 'var(--gradient-subtle)',
+				'gradient-dark': 'var(--gradient-dark)',
+				'gradient-ambient-day': 'var(--gradient-ambient-day)',
+				'gradient-ambient-evening': 'var(--gradient-ambient-evening)',
+				'gradient-ambient-night': 'var(--gradient-ambient-night)'
 			},
 			boxShadow: {
 				'gold': 'var(--shadow-gold)',
-				'elegant': 'var(--shadow-elegant)'
+				'elegant': 'var(--shadow-elegant)',
+				'gold-glow': 'var(--shadow-gold-glow)',
+				'card-luxury': 'var(--shadow-card-luxury)',
+				'floating': 'var(--shadow-floating)',
+				'inset-gold': 'var(--shadow-inset-gold)'
 			},
 			transitionTimingFunction: {
-				'smooth': 'var(--transition-smooth)'
+				'smooth': 'var(--transition-smooth)',
+				'luxury': 'var(--transition-luxury)',
+				'bounce-luxury': 'var(--transition-bounce)'
 			},
 			keyframes: {
 				'accordion-down': {
@@ -97,11 +113,41 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'chip-clink': {
+					'0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+					'25%': { transform: 'translateY(-2px) rotate(1deg)' },
+					'75%': { transform: 'translateY(-1px) rotate(-0.5deg)' }
+				},
+				'card-flip': {
+					'0%': { transform: 'rotateY(0deg)' },
+					'50%': { transform: 'rotateY(90deg)' },
+					'100%': { transform: 'rotateY(0deg)' }
+				},
+				'slot-spin': {
+					'0%': { transform: 'translateY(0)' },
+					'25%': { transform: 'translateY(-10px)' },
+					'50%': { transform: 'translateY(0)' },
+					'75%': { transform: 'translateY(-5px)' },
+					'100%': { transform: 'translateY(0)' }
+				},
+				'gold-shimmer': {
+					'0%': { backgroundPosition: '-200% center' },
+					'100%': { backgroundPosition: '200% center' }
+				},
+				'ambient-pulse': {
+					'0%, 100%': { opacity: '0.1' },
+					'50%': { opacity: '0.3' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'chip-clink': 'chip-clink 0.6s ease-in-out',
+				'card-flip': 'card-flip 0.8s ease-in-out',
+				'slot-spin': 'slot-spin 1s ease-in-out',
+				'gold-shimmer': 'gold-shimmer 2s linear infinite',
+				'ambient-pulse': 'ambient-pulse 2s ease-in-out infinite'
 			}
 		}
 	},
