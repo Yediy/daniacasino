@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dania Beach Casino - Kitchen Dashboard</title>
+  <style>
+    :root { --ink:#111318; --gold:#C6A35E; --bg:#f7f7f8; --card:#ffffff; --muted:#6b7280; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--ink); }
+    header { position: sticky; top:0; background: var(--card); border-bottom: 1px solid #e5e7eb; z-index:10; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
+    h1 { margin: 8px 0 4px; font-size: 20px; color: var(--ink); }
+    .casino-brand { color: var(--gold); font-weight: 700; }
+    .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    select, input, button { padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; font-size: 14px; }
+    button.primary { background: var(--gold); border-color: var(--gold); color:#1a1a1a; font-weight:600; }
+    button.ghost { background: #fff; color:#111; }
+    button.small { padding:6px 10px; font-size:12px; border-radius:8px; }
+    button:hover { opacity: 0.9; cursor: pointer; }
+    main { padding: 16px; }
+    .cols { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; }
+    @media (max-width: 960px) { .cols { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border-radius:16px; box-shadow: 0 4px 16px rgba(0,0,0,.06); padding:16px; display:flex; flex-direction:column; gap:12px; border-left: 4px solid var(--gold); }
+    .card h3 { margin:0; font-size:16px; }
+    .order-line { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); }
+    .items { border-top:1px dashed #e5e7eb; padding-top:8px; }
+    .item { display:flex; justify-content:space-between; font-size:14px; padding:4px 0; }
+    .badges { display:flex; gap:6px; flex-wrap:wrap; margin: 8px 0; }
+    .badge { background:#f1f5f9; color:#111; border-radius:999px; padding:4px 8px; font-size:12px; font-weight: 500; }
+    .status { font-weight:600; text-transform: uppercase; }
+    .status.placed { color: #f59e0b; }
+    .status.prepping { color: #3b82f6; }
+    .status.ready { color: #10b981; }
+    .footer { display:flex; gap:8px; justify-content:flex-end; margin-top: auto; }
+    .hidden { display:none !important; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; letter-spacing: 0.5px; }
+    /* Heatmap styles */
+    .heat-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap:12px; }
+    .heat-card { background: var(--card); border-radius:16px; box-shadow: 0 4px 16px rgba(0,0,0,.06); padding:16px; }
+    .heat-title { font-weight:600; margin-bottom:8px; color: var(--ink); }
+    .heat-bar { height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+    .heat-fill { height:100%; transition: width 0.3s ease; }
+    .heat-meta { display:flex; justify-content:space-between; font-size:12px; margin-top:8px; color:var(--muted); }
+    .section-header { border-bottom: 2px solid var(--gold); padding-bottom: 8px; margin-bottom: 16px; }
+    .loading { text-align: center; padding: 40px; color: var(--muted); }
+    .pickup-code { background: var(--gold); color: #1a1a1a; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <h1><span class="casino-brand">Casino @ Dania Beach</span> Kitchen</h1>
+      <div style="flex:1 1 auto"></div>
+      <select id="vendorSelect">
+        <option value="">Select Vendor...</option>
+      </select>
+      <button id="refreshBtn" class="ghost">🔄 Refresh</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="row" style="margin-bottom:16px">
+      <button class="primary small" data-filter="active">Active Orders</button>
+      <button class="ghost small" data-filter="ready">Ready for Pickup</button>
+      <button class="ghost small" data-filter="all">All Orders</button>
+      <div id="counts" class="badge">—</div>
+      <div style="flex:1"></div>
+      <button class="ghost small" id="toggleHeatmap">🗺️ Gaming Floor</button>
+      <button class="ghost small" id="soundToggle">🔔 Sound: On</button>
+    </div>
+
+    <div id="kitchenSection">
+      <div class="cols">
+        <section>
+          <h3 class="section-header">📋 Placed Orders</h3>
+          <div id="placed" class="loading">No orders</div>
+        </section>
+        <section>
+          <h3 class="section-header">👨‍🍳 Preparing</h3>
+          <div id="prepping" class="loading">No orders</div>
+        </section>
+        <section>
+          <h3 class="section-header">✅ Ready for Pickup</h3>
+          <div id="ready" class="loading">No orders</div>
+        </section>
+      </div>
+    </div>
+
+    <section id="heatmapSection" class="hidden">
+      <h3 class="section-header">🎰 Gaming Floor Heatmap</h3>
+      <div id="heatStats" class="badge">Loading...</div>
+      <div id="heatgrid" class="heat-grid"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Supabase configuration
+    const SUPABASE_URL = 'https://lcfsuhdcexrbqevdojlw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjZnN1aGRjZXhyYnFldmRvamx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4MjE5NDEsImV4cCI6MjA3MTM5Nzk0MX0.m6xnZa5I6w32IznLUt1xUYllFIiRcuv0574QLAXkq18';
+    
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Elements
+    const vendorSelect = document.getElementById('vendorSelect');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const sections = { 
+      placed: document.getElementById('placed'), 
+      prepping: document.getElementById('prepping'), 
+      ready: document.getElementById('ready') 
+    };
+    const kitchenSection = document.getElementById('kitchenSection');
+    const heatmapSection = document.getElementById('heatmapSection');
+    const heatgrid = document.getElementById('heatgrid');
+    const heatStats = document.getElementById('heatStats');
+    const toggleHeatmapBtn = document.getElementById('toggleHeatmap');
+    const countsEl = document.getElementById('counts');
+    const soundBtn = document.getElementById('soundToggle');
+
+    let vendorId = null;
+    let currentFilter = 'active';
+    let soundOn = true;
+    let ordersSubscription = null;
+    let slotsSubscription = null;
+    let lastOrders = [];
+
+    // Sound toggle
+    soundBtn.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundBtn.textContent = soundOn ? '🔔 Sound: On' : '🔕 Sound: Off';
+      localStorage.setItem('kitchenSoundOn', soundOn);
+    });
+
+    // Load sound preference
+    const savedSound = localStorage.getItem('kitchenSoundOn');
+    if (savedSound !== null) {
+      soundOn = savedSound === 'true';
+      soundBtn.textContent = soundOn ? '🔔 Sound: On' : '🔕 Sound: Off';
+    }
+
+    // Toggle between kitchen and heatmap
+    toggleHeatmapBtn.addEventListener('click', () => {
+      const showingHeat = !heatmapSection.classList.contains('hidden');
+      if (showingHeat) {
+        heatmapSection.classList.add('hidden');
+        kitchenSection.classList.remove('hidden');
+        toggleHeatmapBtn.textContent = '🗺️ Gaming Floor';
+        if (slotsSubscription) {
+          slotsSubscription.unsubscribe();
+          slotsSubscription = null;
+        }
+      } else {
+        kitchenSection.classList.add('hidden');
+        heatmapSection.classList.remove('hidden');
+        toggleHeatmapBtn.textContent = '🍳 Kitchen';
+        attachHeatmap();
+      }
+    });
+
+    // Filter buttons
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('primary'));
+        e.currentTarget.classList.add('primary');
+        currentFilter = e.currentTarget.dataset.filter;
+        renderOrders(lastOrders);
+      });
+    });
+
+    // Refresh button
+    refreshBtn.addEventListener('click', () => {
+      if (vendorId) {
+        loadOrders(vendorId);
+      }
+      loadVendors();
+    });
+
+    // Initialize
+    async function init() {
+      await loadVendors();
+    }
+
+    async function loadVendors() {
+      try {
+        const { data: vendors, error } = await supabase
+          .from('dining_vendors')
+          .select('id, name')
+          .eq('accepts_mobile_orders', true)
+          .order('name');
+
+        if (error) throw error;
+
+        vendorSelect.innerHTML = '<option value="">Select Vendor...</option>';
+        
+        vendors.forEach(vendor => {
+          const option = document.createElement('option');
+          option.value = vendor.id;
+          option.textContent = vendor.name;
+          vendorSelect.appendChild(option);
+        });
+
+        vendorSelect.onchange = () => {
+          if (vendorSelect.value) {
+            selectVendor(vendorSelect.value);
+          }
+        };
+
+        // Auto-select first vendor if available
+        if (vendors.length > 0) {
+          vendorSelect.value = vendors[0].id;
+          selectVendor(vendors[0].id);
+        }
+      } catch (error) {
+        console.error('Error loading vendors:', error);
+      }
+    }
+
+    function selectVendor(id) {
+      vendorId = id;
+      loadOrders(id);
+      setupOrdersSubscription(id);
+    }
+
+    async function loadOrders(vendorId) {
+      try {
+        const { data: orders, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            dining_vendors(name),
+            order_items(*, menu_items(name))
+          `)
+          .eq('vendor_id', vendorId)
+          .in('status', ['placed', 'accepted', 'prepping', 'ready'])
+          .order('placed_at', { ascending: true });
+
+        if (error) throw error;
+
+        lastOrders = orders || [];
+        renderOrders(lastOrders);
+      } catch (error) {
+        console.error('Error loading orders:', error);
+      }
+    }
+
+    function setupOrdersSubscription(vendorId) {
+      if (ordersSubscription) {
+        ordersSubscription.unsubscribe();
+      }
+
+      ordersSubscription = supabase
+        .channel('orders-channel')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'orders',
+            filter: `vendor_id=eq.${vendorId}`
+          }, 
+          (payload) => {
+            console.log('Order change:', payload);
+            loadOrders(vendorId);
+            if (soundOn) playNotificationSound();
+          }
+        )
+        .subscribe();
+    }
+
+    function renderOrders(orders) {
+      const buckets = { placed: [], prepping: [], ready: [] };
+      let activeCount = 0;
+
+      orders.forEach(order => {
+        if (['placed', 'accepted', 'prepping'].includes(order.status)) {
+          activeCount++;
+        }
+
+        if (order.status === 'placed' || order.status === 'accepted') {
+          buckets.placed.push(order);
+        } else if (order.status === 'prepping') {
+          buckets.prepping.push(order);
+        } else if (order.status === 'ready') {
+          buckets.ready.push(order);
+        }
+      });
+
+      // Update counts
+      if (currentFilter === 'active') {
+        countsEl.textContent = `Active: ${activeCount}`;
+      } else if (currentFilter === 'ready') {
+        countsEl.textContent = `Ready: ${buckets.ready.length}`;
+      } else {
+        countsEl.textContent = `All: ${orders.length}`;
+      }
+
+      // Render each section
+      renderOrderSection('placed', buckets.placed);
+      renderOrderSection('prepping', buckets.prepping);
+      renderOrderSection('ready', buckets.ready);
+    }
+
+    function renderOrderSection(sectionName, orders) {
+      const section = sections[sectionName];
+      
+      if (orders.length === 0) {
+        section.innerHTML = '<div class="loading">No orders</div>';
+        return;
+      }
+
+      section.innerHTML = '';
+      orders.forEach(order => {
+        section.appendChild(createOrderCard(order));
+      });
+    }
+
+    function createOrderCard(order) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const header = document.createElement('div');
+      header.className = 'order-line';
+      header.innerHTML = `
+        <div>
+          <span class="pickup-code">${order.pickup_code || '—'}</span> 
+          • $${((order.total || 0) / 100).toFixed(2)}
+        </div>
+        <div class="status ${order.status}">${order.status}</div>
+      `;
+
+      const timeInfo = document.createElement('div');
+      timeInfo.className = 'order-line';
+      const placedTime = new Date(order.placed_at).toLocaleTimeString();
+      const etaTime = order.pickup_eta ? new Date(order.pickup_eta).toLocaleTimeString() : '—';
+      timeInfo.innerHTML = `
+        <div>Placed: ${placedTime}</div>
+        <div>ETA: ${etaTime}</div>
+      `;
+
+      const itemsContainer = document.createElement('div');
+      itemsContainer.className = 'items';
+      
+      if (order.order_items && order.order_items.length > 0) {
+        order.order_items.forEach(item => {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'item';
+          const itemName = item.menu_items?.name || `Item ${item.menu_item_id}`;
+          itemDiv.innerHTML = `
+            <span>${item.qty}× ${itemName}</span>
+            <span>$${((item.qty * (item.menu_items?.price || 0)) / 100).toFixed(2)}</span>
+          `;
+          itemsContainer.appendChild(itemDiv);
+        });
+      } else {
+        itemsContainer.innerHTML = '<div class="item">Loading items...</div>';
+      }
+
+      const badges = document.createElement('div');
+      badges.className = 'badges';
+      if (order.dining_vendors?.name) {
+        badges.innerHTML = `<span class="badge">${order.dining_vendors.name}</span>`;
+      }
+
+      const footer = document.createElement('div');
+      footer.className = 'footer';
+
+      // Action buttons based on status
+      if (order.status === 'placed') {
+        footer.appendChild(createButton('Accept', () => updateOrderStatus(order.id, 'accepted')));
+        footer.appendChild(createButton('Start Prep', () => updateOrderStatus(order.id, 'prepping')));
+      } else if (order.status === 'accepted') {
+        footer.appendChild(createButton('Start Prep', () => updateOrderStatus(order.id, 'prepping')));
+        footer.appendChild(createButton('Mark Ready', () => updateOrderStatus(order.id, 'ready')));
+      } else if (order.status === 'prepping') {
+        footer.appendChild(createButton('Mark Ready', () => updateOrderStatus(order.id, 'ready')));
+      } else if (order.status === 'ready') {
+        footer.appendChild(createButton('Picked Up', () => updateOrderStatus(order.id, 'picked_up')));
+      }
+
+      card.appendChild(header);
+      card.appendChild(timeInfo);
+      card.appendChild(itemsContainer);
+      card.appendChild(badges);
+      card.appendChild(footer);
+
+      return card;
+    }
+
+    function createButton(text, onClick) {
+      const button = document.createElement('button');
+      button.className = 'small';
+      button.textContent = text;
+      button.onclick = onClick;
+      return button;
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+      try {
+        const updates = { status: newStatus };
+        
+        if (newStatus === 'prepping') {
+          updates.pickup_eta = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min from now
+        }
+
+        const { error } = await supabase
+          .from('orders')
+          .update(updates)
+          .eq('id', orderId);
+
+        if (error) throw error;
+
+        if (soundOn && newStatus === 'ready') {
+          playNotificationSound();
+        }
+      } catch (error) {
+        console.error('Error updating order:', error);
+        alert('Failed to update order status');
+      }
+    }
+
+    function playNotificationSound() {
+      try {
+        // Simple beep sound
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (e) {
+        console.log('Audio not supported');
+      }
+    }
+
+    // HEATMAP FUNCTIONS
+    async function attachHeatmap() {
+      try {
+        await loadSlotsHeatmap();
+        setupSlotsSubscription();
+      } catch (error) {
+        console.error('Error loading heatmap:', error);
+      }
+    }
+
+    async function loadSlotsHeatmap() {
+      try {
+        const { data: slots, error } = await supabase
+          .from('slots')
+          .select('bank, room, status');
+
+        if (error) throw error;
+
+        renderSlotsHeatmap(slots || []);
+      } catch (error) {
+        console.error('Error loading slots:', error);
+      }
+    }
+
+    function setupSlotsSubscription() {
+      if (slotsSubscription) {
+        slotsSubscription.unsubscribe();
+      }
+
+      slotsSubscription = supabase
+        .channel('slots-channel')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'slots'
+          }, 
+          () => {
+            loadSlotsHeatmap();
+          }
+        )
+        .subscribe();
+    }
+
+    function renderSlotsHeatmap(slots) {
+      const bankMap = new Map();
+      let totalSlots = 0;
+      let freeSlots = 0;
+
+      slots.forEach(slot => {
+        const key = `${slot.room || 'Main Floor'}|${slot.bank}`;
+        if (!bankMap.has(key)) {
+          bankMap.set(key, {
+            room: slot.room || 'Main Floor',
+            bank: slot.bank,
+            total: 0,
+            free: 0
+          });
+        }
+        
+        const bank = bankMap.get(key);
+        bank.total++;
+        totalSlots++;
+        
+        if (slot.status === 'free') {
+          bank.free++;
+          freeSlots++;
+        }
+      });
+
+      heatStats.textContent = `${freeSlots} free of ${totalSlots} total slots`;
+      heatgrid.innerHTML = '';
+
+      const banks = Array.from(bankMap.values())
+        .sort((a, b) => a.room.localeCompare(b.room) || a.bank.localeCompare(b.bank));
+
+      banks.forEach(bank => {
+        heatgrid.appendChild(createHeatCard(bank));
+      });
+    }
+
+    function createHeatCard(bank) {
+      const card = document.createElement('div');
+      card.className = 'heat-card';
+
+      const title = document.createElement('div');
+      title.className = 'heat-title';
+      title.textContent = `${bank.room} • ${bank.bank}`;
+
+      const bar = document.createElement('div');
+      bar.className = 'heat-bar';
+
+      const fill = document.createElement('div');
+      fill.className = 'heat-fill';
+      
+      const freePct = bank.total > 0 ? (bank.free / bank.total) * 100 : 0;
+      fill.style.width = freePct + '%';
+      
+      // Color gradient from red (0% free) to green (100% free)
+      const hue = freePct * 1.2; // 0 to 120 (red to green)
+      fill.style.background = `hsl(${hue}, 70%, 50%)`;
+
+      bar.appendChild(fill);
+
+      const meta = document.createElement('div');
+      meta.className = 'heat-meta';
+      meta.innerHTML = `
+        <span>Free: ${bank.free}/${bank.total}</span>
+        <span>Occupied: ${bank.total - bank.free}</span>
+      `;
+
+      card.appendChild(title);
+      card.appendChild(bar);
+      card.appendChild(meta);
+
+      return card;
+    }
+
+    // Start the application
+    init();
+  </script>
+</body>
+</html>
