@@ -133,6 +133,7 @@ export type Database = {
           active: boolean | null
           hours: Json | null
           id: string
+          is_open: boolean | null
           location: string
           menu_url: string | null
           name: string
@@ -144,6 +145,7 @@ export type Database = {
           active?: boolean | null
           hours?: Json | null
           id?: string
+          is_open?: boolean | null
           location: string
           menu_url?: string | null
           name: string
@@ -155,11 +157,48 @@ export type Database = {
           active?: boolean | null
           hours?: Json | null
           id?: string
+          is_open?: boolean | null
           location?: string
           menu_url?: string | null
           name?: string
           pickup_counter_code?: string | null
           prep_minutes?: number | null
+        }
+        Relationships: []
+      }
+      etg_tables: {
+        Row: {
+          floor_zone: string | null
+          game: string
+          id: string
+          max_seats: number | null
+          open_seats: number | null
+          players: number | null
+          stakes: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          floor_zone?: string | null
+          game: string
+          id: string
+          max_seats?: number | null
+          open_seats?: number | null
+          players?: number | null
+          stakes: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          floor_zone?: string | null
+          game?: string
+          id?: string
+          max_seats?: number | null
+          open_seats?: number | null
+          players?: number | null
+          stakes?: string
+          status?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -258,6 +297,45 @@ export type Database = {
         }
         Relationships: []
       }
+      jai_alai_streams: {
+        Row: {
+          age_limit: string | null
+          created_at: string
+          end_time: string | null
+          hls_url: string | null
+          id: string
+          notes: string | null
+          poster_img: string | null
+          start_time: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          age_limit?: string | null
+          created_at?: string
+          end_time?: string | null
+          hls_url?: string | null
+          id: string
+          notes?: string | null
+          poster_img?: string | null
+          start_time?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          age_limit?: string | null
+          created_at?: string
+          end_time?: string | null
+          hls_url?: string | null
+          id?: string
+          notes?: string | null
+          poster_img?: string | null
+          start_time?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       map_pins: {
         Row: {
           id: string
@@ -294,6 +372,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           price: number
+          stock_qty: number | null
           tags: string[] | null
           vendor_id: string
         }
@@ -305,6 +384,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           price: number
+          stock_qty?: number | null
           tags?: string[] | null
           vendor_id: string
         }
@@ -316,6 +396,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           price?: number
+          stock_qty?: number | null
           tags?: string[] | null
           vendor_id?: string
         }
@@ -473,6 +554,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      poker_table_players: {
+        Row: {
+          id: string
+          joined_at: string
+          seat: number
+          stack: number | null
+          status: string | null
+          table_id: string
+          user_id: string
+        }
+        Insert: {
+          id: string
+          joined_at?: string
+          seat: number
+          stack?: number | null
+          status?: string | null
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          seat?: number
+          stack?: number | null
+          status?: string | null
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poker_table_players_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      poker_tables: {
+        Row: {
+          floor_zone: string | null
+          game: string
+          id: string
+          max_seats: number | null
+          name: string
+          open_seats: number | null
+          players: number | null
+          seated_player_ids: string[] | null
+          stakes: string
+          status: string | null
+          updated_at: string
+          wait_count: number | null
+        }
+        Insert: {
+          floor_zone?: string | null
+          game: string
+          id: string
+          max_seats?: number | null
+          name: string
+          open_seats?: number | null
+          players?: number | null
+          seated_player_ids?: string[] | null
+          stakes: string
+          status?: string | null
+          updated_at?: string
+          wait_count?: number | null
+        }
+        Update: {
+          floor_zone?: string | null
+          game?: string
+          id?: string
+          max_seats?: number | null
+          name?: string
+          open_seats?: number | null
+          players?: number | null
+          seated_player_ids?: string[] | null
+          stakes?: string
+          status?: string | null
+          updated_at?: string
+          wait_count?: number | null
+        }
+        Relationships: []
       }
       poker_tourneys: {
         Row: {
@@ -635,6 +799,51 @@ export type Database = {
           rg_url?: string | null
           support_phone?: string | null
           terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      slots: {
+        Row: {
+          bank: string
+          denom: string
+          device_id: string | null
+          game_title: string
+          id: string
+          last_session_end: string | null
+          lat: number | null
+          lng: number | null
+          position: number
+          room: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank: string
+          denom: string
+          device_id?: string | null
+          game_title: string
+          id: string
+          last_session_end?: string | null
+          lat?: number | null
+          lng?: number | null
+          position: number
+          room: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank?: string
+          denom?: string
+          device_id?: string | null
+          game_title?: string
+          id?: string
+          last_session_end?: string | null
+          lat?: number | null
+          lng?: number | null
+          position?: number
+          room?: string
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
