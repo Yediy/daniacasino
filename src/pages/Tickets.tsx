@@ -6,11 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { TicketCard } from "@/components/TicketCard";
+import { TicketPurchaseDialog } from "@/components/TicketPurchaseDialog";
 import { Calendar, Search, Filter } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import { useToast } from "@/hooks/use-toast";
 
-const stripePromise = loadStripe("pk_test_your_publishable_key_here");
+
 
 interface Event {
   id: string;
@@ -32,6 +32,8 @@ export const Tickets = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,54 +63,18 @@ export const Tickets = () => {
     }
   };
 
-  const handleBuyTicket = async (eventId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication Required",
-          description: "Please log in to purchase tickets",
-          variant: "destructive",
-        });
-        return;
-      }
+  const handleBuyTicket = (event: Event) => {
+    setSelectedEvent(event);
+    setDialogOpen(true);
+  };
 
-      const event = events.find(e => e.id === eventId);
-      if (!event) return;
-
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          purpose: 'event',
-          refId: eventId,
-          amountCents: event.price + event.fee,
-          qty: 1,
-          description: `Ticket for ${event.title}`
-        }
-      });
-
-      if (error) throw error;
-
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to load');
-
-      const { error: stripeError } = await stripe.confirmPayment({
-        clientSecret: data.clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/wallet`,
-        },
-      });
-
-      if (stripeError) {
-        throw stripeError;
-      }
-    } catch (error) {
-      console.error('Error purchasing ticket:', error);
-      toast({
-        title: "Payment Error",
-        description: "Failed to process payment",
-        variant: "destructive",
-      });
-    }
+  const handlePurchaseSuccess = () => {
+    toast({
+      title: "Tickets Purchased!",
+      description: "Your tickets have been added to your wallet",
+    });
+    // Refresh events to update inventory
+    fetchEvents();
   };
 
   const filteredEvents = events.filter(event => {
@@ -205,6 +171,14 @@ export const Tickets = () => {
             <p>• Contact support for assistance</p>
           </CardContent>
         </Card>
+
+        {/* Purchase Dialog */}
+        <TicketPurchaseDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          event={selectedEvent}
+          onSuccess={handlePurchaseSuccess}
+        />
       </div>
     </div>
   );

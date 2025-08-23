@@ -19,7 +19,7 @@ interface Event {
 
 interface TicketCardProps {
   event: Event;
-  onBuyTicket: (eventId: string) => void;
+  onBuyTicket: (event: Event) => void;
 }
 
 export const TicketCard = ({ event, onBuyTicket }: TicketCardProps) => {
@@ -115,7 +115,7 @@ export const TicketCard = ({ event, onBuyTicket }: TicketCardProps) => {
 
         {/* Buy Button */}
         <Button 
-          onClick={() => onBuyTicket(event.id)}
+          onClick={() => onBuyTicket(event)}
           className="w-full bg-gradient-gold hover:bg-casino-gold-dark shadow-gold transition-all duration-300 hover-scale"
           disabled={event.inventory <= 0}
         >
