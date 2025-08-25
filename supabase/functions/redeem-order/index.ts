@@ -46,6 +46,25 @@ serve(async (req) => {
     const staffUser = userData.user;
     logStep("Staff authenticated", { staffId: staffUser.id });
 
+    // Check if user has Staff or Admin role using new role system
+    const { data: hasStaffRole, error: staffRoleError } = await supabaseClient.rpc('has_role', {
+      _user_id: staffUser.id,
+      _role: 'Staff'
+    });
+    
+    const { data: hasAdminRole, error: adminRoleError } = await supabaseClient.rpc('has_role', {
+      _user_id: staffUser.id,
+      _role: 'Admin'
+    });
+
+    if ((staffRoleError && adminRoleError) || (!hasStaffRole && !hasAdminRole)) {
+      logStep("Access denied - insufficient privileges");
+      return new Response(JSON.stringify({ error: "Access denied. Staff privileges required." }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 403,
+      });
+    }
+
     const { pickup_code } = await req.json();
     if (!pickup_code) {
       return new Response(JSON.stringify({ error: "Pickup code required" }), {

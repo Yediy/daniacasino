@@ -25,6 +25,38 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+  // Authenticate user
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Authorization required" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+  if (userError || !userData.user) {
+    return new Response(JSON.stringify({ error: "Invalid authentication" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Check if user has Admin role using new role system
+  const { data: hasAdminRole, error: adminRoleError } = await supabaseClient.rpc('has_role', {
+    _user_id: userData.user.id,
+    _role: 'Admin'
+  });
+
+  if (adminRoleError || !hasAdminRole) {
+    logStep("Access denied - admin privileges required");
+    return new Response(JSON.stringify({ error: "Access denied. Admin privileges required." }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 403,
+    });
+  }
+
     const {
       event_type,
       resource_type,

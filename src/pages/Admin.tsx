@@ -54,13 +54,16 @@ export const Admin = () => {
         return;
       }
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // Check both profiles table (legacy) and new user_roles table
+      const [profileResult, roleResult] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('user_roles').select('role').eq('user_id', user.id).order('role', { ascending: false }).limit(1).single()
+      ]);
 
-      if (error || !profile || (profile.tier !== 'Admin' && profile.tier !== 'Staff')) {
+      const profile = profileResult.data;
+      const userRole = roleResult.data?.role || profile?.tier || 'User';
+
+      if (!profile || (userRole !== 'Admin' && userRole !== 'Staff')) {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges",
@@ -70,7 +73,10 @@ export const Admin = () => {
         return;
       }
 
-      setCurrentUser(profile);
+      setCurrentUser({
+        ...profile,
+        tier: userRole as 'User' | 'Staff' | 'Admin'
+      });
     } catch (error) {
       console.error('Error checking admin access:', error);
       window.location.href = '/auth';
@@ -126,12 +132,30 @@ export const Admin = () => {
 
   const updateUserTier = async (userId: string, newTier: 'User' | 'Staff' | 'Admin') => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // First, remove existing roles for this user
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      // Then add the new role
       const { error } = await supabase
+        .from('user_roles')
+        .insert({ 
+          user_id: userId, 
+          role: newTier,
+          created_by: user?.id 
+        });
+
+      if (error) throw error;
+
+      // Also update profiles table for backward compatibility
+      await supabase
         .from('profiles')
         .update({ tier: newTier })
         .eq('id', userId);
-
-      if (error) throw error;
 
       toast({
         title: "User Updated",

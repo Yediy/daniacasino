@@ -17,6 +17,10 @@ interface UserProfile {
   name?: string;
 }
 
+interface UserRole {
+  role: 'User' | 'Staff' | 'Admin';
+}
+
 export const AuthGuard = ({ 
   children, 
   requireAuth = false, 
@@ -64,17 +68,29 @@ export const AuthGuard = ({
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      // First try to get from profiles (legacy)
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('tier, name')
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else {
-        setProfile(data);
-      }
+      // Also get from new user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .order('role', { ascending: false }) // Admin > Staff > User
+        .limit(1)
+        .single();
+
+      // Use role data if available, fallback to profile tier
+      const userRole = roleData?.role || profileData?.tier || 'User';
+      
+      setProfile({
+        tier: userRole as 'User' | 'Staff' | 'Admin',
+        name: profileData?.name
+      });
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
     } finally {
