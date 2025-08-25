@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          staff_id: string | null
+          timestamp: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          staff_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          staff_id?: string | null
+          timestamp?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       cash_game_lists: {
         Row: {
           game: string
@@ -95,6 +140,8 @@ export type Database = {
           id: string
           redeem_window_end: string | null
           redeem_window_start: string | null
+          redeemed_at: string | null
+          redeemed_by_staff_id: string | null
           status: string | null
           stripe_payment_intent_id: string | null
           user_id: string
@@ -108,6 +155,8 @@ export type Database = {
           id?: string
           redeem_window_end?: string | null
           redeem_window_start?: string | null
+          redeemed_at?: string | null
+          redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           user_id: string
@@ -121,6 +170,8 @@ export type Database = {
           id?: string
           redeem_window_end?: string | null
           redeem_window_start?: string | null
+          redeemed_at?: string | null
+          redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           user_id?: string
@@ -211,6 +262,8 @@ export type Database = {
           id: string
           issued_at: string
           qty: number
+          redeemed_at: string | null
+          redeemed_by_staff_id: string | null
           status: string | null
           stripe_payment_intent_id: string | null
           user_id: string
@@ -223,6 +276,8 @@ export type Database = {
           id?: string
           issued_at?: string
           qty?: number
+          redeemed_at?: string | null
+          redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           user_id: string
@@ -235,6 +290,8 @@ export type Database = {
           id?: string
           issued_at?: string
           qty?: number
+          redeemed_at?: string | null
+          redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
           user_id?: string
@@ -453,6 +510,8 @@ export type Database = {
         Row: {
           fee: number | null
           id: string
+          picked_up_at: string | null
+          picked_up_by_staff_id: string | null
           pickup_code: string | null
           pickup_eta: string | null
           placed_at: string
@@ -468,6 +527,8 @@ export type Database = {
         Insert: {
           fee?: number | null
           id?: string
+          picked_up_at?: string | null
+          picked_up_by_staff_id?: string | null
           pickup_code?: string | null
           pickup_eta?: string | null
           placed_at?: string
@@ -483,6 +544,8 @@ export type Database = {
         Update: {
           fee?: number | null
           id?: string
+          picked_up_at?: string | null
+          picked_up_by_staff_id?: string | null
           pickup_code?: string | null
           pickup_eta?: string | null
           placed_at?: string

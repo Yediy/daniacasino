@@ -13,6 +13,21 @@ verify_jwt = true
 [functions.payment-webhook]
 verify_jwt = false
 
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.redeem-ticket]
+verify_jwt = true
+
+[functions.redeem-voucher]
+verify_jwt = true
+
+[functions.redeem-order]
+verify_jwt = true
+
+[functions.audit-log]
+verify_jwt = true
+
 [functions.join-cash-game-queue]
 verify_jwt = true
 
