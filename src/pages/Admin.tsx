@@ -4,432 +4,378 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { AuthGuard } from "@/components/AuthGuard";
 import { 
-  Users, 
   Shield, 
-  Activity, 
+  Users, 
   CreditCard, 
   Ticket, 
-  Trophy,
+  Trophy, 
   UtensilsCrossed,
-  AlertTriangle,
   Settings,
-  RefreshCw
+  LogOut,
+  AlertTriangle
 } from "lucide-react";
 
+interface UserProfile {
+  id: string;
+  name?: string;
+  tier: 'User' | 'Staff' | 'Admin';
+  points: number;
+  age_verified: boolean;
+  created_at: string;
+}
+
 interface AdminStats {
-  totalUsers: number;
-  totalTickets: number;
-  totalVouchers: number;
-  totalOrders: number;
-  recentActivity: any[];
+  total_users: number;
+  active_vouchers: number;
+  pending_tickets: number;
+  pending_orders: number;
+  poker_entries: number;
 }
 
 export const Admin = () => {
-  const [stats, setStats] = useState<AdminStats>({
-    totalUsers: 0,
-    totalTickets: 0,
-    totalVouchers: 0,
-    totalOrders: 0,
-    recentActivity: []
-  });
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchAdminStats();
+    checkAdminAccess();
+    fetchAdminData();
   }, []);
 
-  const fetchAdminStats = async () => {
-    setLoading(true);
+  const checkAdminAccess = async () => {
     try {
-      // Fetch user count
-      const { count: userCount } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = '/auth';
+        return;
+      }
+
+      const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch ticket count
-      const { count: ticketCount } = await supabase
-        .from('event_tickets')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch voucher count
-      const { count: voucherCount } = await supabase
-        .from('chip_vouchers')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch order count
-      const { count: orderCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch recent activity from audit logs
-      const { data: recentActivity } = await supabase
-        .from('audit_logs')
         .select('*')
-        .order('timestamp', { ascending: false })
-        .limit(10);
+        .eq('id', user.id)
+        .single();
 
-      setStats({
-        totalUsers: userCount || 0,
-        totalTickets: ticketCount || 0,
-        totalVouchers: voucherCount || 0,
-        totalOrders: orderCount || 0,
-        recentActivity: recentActivity || []
-      });
+      if (error || !profile || (profile.tier !== 'Admin' && profile.tier !== 'Staff')) {
+        toast({
+          title: "Access Denied",
+          description: "You don't have admin privileges",
+          variant: "destructive",
+        });
+        window.location.href = '/';
+        return;
+      }
+
+      setCurrentUser(profile);
     } catch (error) {
-      console.error('Error fetching admin stats:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load admin statistics",
-        variant: "destructive",
-      });
+      console.error('Error checking admin access:', error);
+      window.location.href = '/auth';
     } finally {
       setLoading(false);
     }
   };
 
-  const StatsCard = ({ icon: Icon, title, value, description, color = "primary" }: {
-    icon: any;
-    title: string;
-    value: string | number;
-    description: string;
-    color?: string;
-  }) => (
-    <Card className="shadow-elegant">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            {title}
-          </CardTitle>
-          <Icon className={`h-4 w-4 text-${color}`} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {description}
-        </p>
-      </CardContent>
-    </Card>
-  );
+  const fetchAdminData = async () => {
+    try {
+      // Fetch system statistics
+      const [
+        { data: usersData },
+        { data: vouchersData },
+        { data: ticketsData },
+        { data: ordersData },
+        { data: pokerData }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('chip_vouchers').select('id').eq('status', 'paid'),
+        supabase.from('event_tickets').select('id').eq('status', 'paid'),
+        supabase.from('orders').select('id').eq('status', 'pending'),
+        supabase.from('poker_entries').select('id').eq('status', 'paid')
+      ]);
 
-  const UserManagement = () => {
-    const [users, setUsers] = useState([]);
-    const [loadingUsers, setLoadingUsers] = useState(true);
-
-    useEffect(() => {
-      fetchUsers();
-    }, []);
-
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(50);
-
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load users",
-          variant: "destructive",
-        });
-      } finally {
-        setLoadingUsers(false);
-      }
-    };
-
-    const updateUserRole = async (userId: string, newRole: 'User' | 'Staff' | 'Admin') => {
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ tier: newRole })
-          .eq('id', userId);
-
-        if (error) throw error;
-
-        toast({
-          title: "Success",
-          description: "User role updated successfully",
-        });
-        
-        fetchUsers(); // Refresh the list
-      } catch (error) {
-        console.error('Error updating user role:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update user role",
-          variant: "destructive",
-        });
-      }
-    };
-
-    if (loadingUsers) return <div>Loading users...</div>;
-
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">User Management</h3>
-          <Button onClick={fetchUsers} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-        
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Points</TableHead>
-              <TableHead>Age Verified</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users.map((user: any) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.name || 'No name'}</TableCell>
-                <TableCell>
-                  <Badge variant={
-                    user.tier === 'Admin' ? 'destructive' : 
-                    user.tier === 'Staff' ? 'secondary' : 
-                    'outline'
-                  }>
-                    {user.tier}
-                  </Badge>
-                </TableCell>
-                <TableCell>{user.points || 0}</TableCell>
-                <TableCell>
-                  <Badge variant={user.age_verified ? 'default' : 'outline'}>
-                    {user.age_verified ? 'Yes' : 'No'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    {user.tier !== 'Staff' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateUserRole(user.id, 'Staff')}
-                      >
-                        Make Staff
-                      </Button>
-                    )}
-                    {user.tier !== 'Admin' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateUserRole(user.id, 'Admin')}
-                      >
-                        Make Admin
-                      </Button>
-                    )}
-                    {user.tier !== 'User' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateUserRole(user.id, 'User')}
-                      >
-                        Make User
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
+      setUsers(usersData || []);
+      setStats({
+        total_users: usersData?.length || 0,
+        active_vouchers: vouchersData?.length || 0,
+        pending_tickets: ticketsData?.length || 0,
+        pending_orders: ordersData?.length || 0,
+        poker_entries: pokerData?.length || 0
+      });
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load admin data",
+        variant: "destructive",
+      });
+    }
   };
 
-  const AuditLogs = () => (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Recent Activity</h3>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Event</TableHead>
-            <TableHead>Resource</TableHead>
-            <TableHead>User ID</TableHead>
-            <TableHead>Timestamp</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {stats.recentActivity.map((activity: any) => (
-            <TableRow key={activity.id}>
-              <TableCell>
-                <Badge variant="outline">{activity.event_type}</Badge>
-              </TableCell>
-              <TableCell>{activity.resource_type}</TableCell>
-              <TableCell className="font-mono text-xs">
-                {activity.user_id ? activity.user_id.substring(0, 8) + '...' : 'System'}
-              </TableCell>
-              <TableCell>
-                {new Date(activity.timestamp).toLocaleString()}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  );
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const updateUserTier = async (userId: string, newTier: 'User' | 'Staff' | 'Admin') => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ tier: newTier })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "User Updated",
+        description: `User role updated to ${newTier}`,
+      });
+
+      fetchAdminData(); // Refresh data
+    } catch (error) {
+      console.error('Error updating user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update user role",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Checking admin access...</div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return null;
+  }
 
   return (
-    <AuthGuard requireAuth requireRole="Admin">
-      <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
-        <div className="max-w-6xl mx-auto px-4 space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold casino-heading flex items-center justify-center space-x-3">
+    <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
+      <div className="max-w-6xl mx-auto px-4 space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-casino-charcoal flex items-center gap-2">
               <Shield className="h-8 w-8 text-primary" />
-              <span>Admin Dashboard</span>
+              Admin Dashboard
             </h1>
             <p className="text-muted-foreground">
-              System management and oversight
+              Welcome, {currentUser.name} ({currentUser.tier})
             </p>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              icon={Users}
-              title="Total Users"
-              value={stats.totalUsers}
-              description="Registered casino members"
-            />
-            <StatsCard
-              icon={Ticket}
-              title="Event Tickets"
-              value={stats.totalTickets}
-              description="Total tickets issued"
-              color="casino-emerald"
-            />
-            <StatsCard
-              icon={CreditCard}
-              title="Chip Vouchers"
-              value={stats.totalVouchers}
-              description="Vouchers in system"
-              color="casino-gold"
-            />
-            <StatsCard
-              icon={UtensilsCrossed}
-              title="Food Orders"
-              value={stats.totalOrders}
-              description="Total orders placed"
-              color="casino-ruby"
-            />
-          </div>
-
-          {/* Admin Tabs */}
-          <Tabs defaultValue="users" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="users">
-                <Users className="h-4 w-4 mr-2" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="activity">
-                <Activity className="h-4 w-4 mr-2" />
-                Activity
-              </TabsTrigger>
-              <TabsTrigger value="settings">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </TabsTrigger>
-              <TabsTrigger value="security">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Security
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="users" className="mt-6">
-              <Card className="shadow-elegant">
-                <CardContent className="p-6">
-                  <UserManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="activity" className="mt-6">
-              <Card className="shadow-elegant">
-                <CardContent className="p-6">
-                  <AuditLogs />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings" className="mt-6">
-              <Card className="shadow-elegant">
-                <CardHeader>
-                  <CardTitle>System Settings</CardTitle>
-                  <CardDescription>
-                    Configure casino system parameters
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <Settings className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Settings management coming soon
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="security" className="mt-6">
-              <Card className="shadow-elegant">
-                <CardHeader>
-                  <CardTitle>Security Overview</CardTitle>
-                  <CardDescription>
-                    Monitor system security and audit trails
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8">
-                    <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">
-                      Advanced security monitoring coming soon
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* Quick Actions */}
-          <Card className="shadow-elegant">
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                <Button onClick={fetchAdminStats} className="bg-gradient-gold hover:bg-casino-gold-dark">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Stats
-                </Button>
-                <Button variant="outline">
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Tournament Management
-                </Button>
-                <Button variant="outline">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Payment Reports
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <Button onClick={handleSignOut} variant="outline">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
         </div>
+
+        {/* Security Warning */}
+        <Card className="border-destructive bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="text-destructive flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Security Notice
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-2">
+              OTP expiry configuration exceeds recommended threshold. Please update in Supabase dashboard.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Go to Authentication → Settings → Auth to adjust OTP expiry settings.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Stats Overview */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <Card className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Users className="h-5 w-5 text-primary" />
+                  <Badge variant="secondary">{stats.total_users}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm font-medium">Total Users</div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CreditCard className="h-5 w-5 text-casino-emerald" />
+                  <Badge variant="secondary">{stats.active_vouchers}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm font-medium">Active Vouchers</div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Ticket className="h-5 w-5 text-casino-ruby" />
+                  <Badge variant="secondary">{stats.pending_tickets}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm font-medium">Event Tickets</div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Trophy className="h-5 w-5 text-casino-gold" />
+                  <Badge variant="secondary">{stats.poker_entries}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm font-medium">Poker Entries</div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-elegant">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <UtensilsCrossed className="h-5 w-5 text-casino-charcoal" />
+                  <Badge variant="secondary">{stats.pending_orders}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm font-medium">Pending Orders</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Admin Tabs */}
+        <Tabs defaultValue="users" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users" className="space-y-4">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>
+                  Manage user accounts and permissions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{user.name || 'Unnamed User'}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {user.points} points • {user.age_verified ? 'Age Verified' : 'Not Verified'}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={user.tier === 'Admin' ? 'destructive' : user.tier === 'Staff' ? 'default' : 'secondary'}
+                        >
+                          {user.tier}
+                        </Badge>
+                        {currentUser.tier === 'Admin' && user.id !== currentUser.id && (
+                          <div className="flex gap-1">
+                            {user.tier !== 'Staff' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateUserTier(user.id, 'Staff')}
+                              >
+                                Make Staff
+                              </Button>
+                            )}
+                            {user.tier !== 'User' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updateUserTier(user.id, 'User')}
+                              >
+                                Make User
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="transactions">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>Transaction History</CardTitle>
+                <CardDescription>
+                  Monitor all system transactions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Transaction monitoring interface coming soon
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>System Reports</CardTitle>
+                <CardDescription>
+                  Generate and view system reports
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Reporting system coming soon
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>System Settings</CardTitle>
+                <CardDescription>
+                  Configure system-wide settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Settings panel coming soon
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
-    </AuthGuard>
+    </div>
   );
 };

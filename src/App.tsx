@@ -3,8 +3,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from "@supabase/supabase-js";
 import { AgeGate } from "@/components/AgeGate";
+import { Auth } from "@/pages/Auth";
+import { Admin } from "@/pages/Admin";
 import { Header } from "@/components/Header";
 import { Navigation, NavigationTab } from "@/components/Navigation";
 import { Home } from "@/pages/Home";
@@ -13,33 +16,83 @@ import { Gaming } from "@/pages/Gaming";
 import { Dining } from "@/pages/Dining";
 import { Entertainment } from "@/pages/Entertainment";
 import { Visit } from "@/pages/Visit";
-import { Auth } from "@/pages/Auth";
-import { Admin } from "@/pages/Admin";
 import { WalletPage } from "@/pages/Wallet";
 
 const queryClient = new QueryClient();
 
-const MainApp = () => {
+const App = () => {
+  const [ageVerified, setAgeVerified] = useState(false);
   const [activeTab, setActiveTab] = useState<NavigationTab>("home");
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Handle URL-based navigation
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path === '/poker') setActiveTab('poker');
-    else if (path === '/gaming') setActiveTab('gaming');
-    else if (path === '/dining') setActiveTab('dining');
-    else if (path === '/entertainment') setActiveTab('entertainment');
-    else if (path === '/visit') setActiveTab('visit');
-    else setActiveTab('home');
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+        
+        // Auto-create profile if user signs up
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('id', session.user.id)
+              .single();
+              
+            if (!profile) {
+              await supabase
+                .from('profiles')
+                .insert({
+                  id: session.user.id,
+                  name: session.user.user_metadata?.name || null,
+                  tier: 'User'
+                });
+            }
+          }, 0);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Check age verification
+    const verified = localStorage.getItem("age_verified");
+    if (verified === "true") {
+      setAgeVerified(true);
+    }
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleTabChange = (tab: NavigationTab) => {
-    setActiveTab(tab);
-    const path = tab === 'home' ? '/' : `/${tab}`;
-    window.history.pushState(null, '', path);
+  const handleAgeVerify = () => {
+    localStorage.setItem("age_verified", "true");
+    setAgeVerified(true);
   };
 
   const renderTabContent = () => {
+    // Check for wallet access (requires auth)
+    if (activeTab === "wallet") {
+      if (!user) {
+        return <Auth />;
+      }
+      return <WalletPage />;
+    }
+
+    // Check for admin access
+    if (activeTab === "admin") {
+      return <Admin />;
+    }
+
     switch (activeTab) {
       case "home":
         return <Home />;
@@ -58,31 +111,19 @@ const MainApp = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main>
-        {renderTabContent()}
-      </main>
-      <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
-    </div>
-  );
-};
-
-const App = () => {
-  const [ageVerified, setAgeVerified] = useState(false);
-
-  useEffect(() => {
-    const verified = localStorage.getItem("age_verified");
-    if (verified === "true") {
-      setAgeVerified(true);
-    }
-  }, []);
-
-  const handleAgeVerify = () => {
-    localStorage.setItem("age_verified", "true");
-    setAgeVerified(true);
-  };
+  if (loading) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="text-lg">Loading...</div>
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
 
   if (!ageVerified) {
     return (
@@ -101,20 +142,13 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <Router>
-          <Routes>
-            <Route path="/" element={<MainApp />} />
-            <Route path="/poker" element={<MainApp />} />
-            <Route path="/gaming" element={<MainApp />} />
-            <Route path="/dining" element={<MainApp />} />
-            <Route path="/entertainment" element={<MainApp />} />
-            <Route path="/visit" element={<MainApp />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/wallet" element={<WalletPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
+        <div className="min-h-screen bg-background">
+          <Header user={user} />
+          <main>
+            {renderTabContent()}
+          </main>
+          <Navigation activeTab={activeTab} onTabChange={setActiveTab} user={user} />
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   );

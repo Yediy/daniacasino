@@ -1,27 +1,46 @@
 import { useState } from "react";
-import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin } from "lucide-react";
+import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin, Wallet, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { User } from "@supabase/supabase-js";
 
-export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "visit";
+export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "visit" | "wallet" | "admin";
 
 interface NavigationProps {
   activeTab: NavigationTab;
   onTabChange: (tab: NavigationTab) => void;
+  user?: User | null;
 }
 
-const tabs = [
-  { id: "home" as const, label: "Home", icon: Home },
-  { id: "poker" as const, label: "Poker", icon: Spade },
-  { id: "gaming" as const, label: "Gaming", icon: Gamepad2 },
-  { id: "dining" as const, label: "Dining", icon: Utensils },
-  { id: "entertainment" as const, label: "Events", icon: Calendar },
-  { id: "visit" as const, label: "Visit", icon: MapPin },
-];
+export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) => {
+  const baseTabs = [
+    { id: "home" as const, label: "Home", icon: Home },
+    { id: "poker" as const, label: "Poker", icon: Spade },
+    { id: "gaming" as const, label: "Gaming", icon: Gamepad2 },
+    { id: "dining" as const, label: "Dining", icon: Utensils },
+    { id: "entertainment" as const, label: "Events", icon: Calendar },
+    { id: "visit" as const, label: "Visit", icon: MapPin },
+  ];
 
-export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
+  // Add authenticated user tabs
+  const userTabs = user ? [
+    { id: "wallet" as const, label: "Wallet", icon: Wallet }
+  ] : [];
+
+  // Add admin tab for staff/admin users (would need profile check in real implementation)
+  const adminTabs: Array<{id: NavigationTab, label: string, icon: any}> = [];
+
+  const tabs = [...baseTabs, ...userTabs, ...adminTabs];
+  const handleTabClick = (tabId: NavigationTab) => {
+    if (tabId === 'wallet' && !user) {
+      window.location.href = '/auth';
+      return;
+    }
+    onTabChange(tabId);
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elegant z-50">
-      <div className="grid grid-cols-6 max-w-md mx-auto">
+      <div className={`grid max-w-md mx-auto ${tabs.length === 6 ? 'grid-cols-6' : `grid-cols-${tabs.length}`}`}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -29,7 +48,7 @@ export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={cn(
                 "flex flex-col items-center justify-center py-2 px-1 transition-all duration-200",
                 isActive
