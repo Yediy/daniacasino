@@ -7,9 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WalletCard } from "@/components/WalletCard";
 import { WalletIcon, Plus, CreditCard, Trophy, Ticket, UtensilsCrossed } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { loadStripe } from "@stripe/stripe-js";
+import { AuthGuard } from "@/components/AuthGuard";
 
-const stripePromise = loadStripe("pk_test_your_publishable_key_here");
+// Remove hardcoded stripe key - will be handled by edge functions
+// const stripePromise = loadStripe("pk_test_your_publishable_key_here");
 
 interface UserProfile {
   name?: string;
@@ -170,46 +171,21 @@ export const WalletPage = () => {
       if (!user) {
         toast({
           title: "Authentication Required",
-          description: "Please log in to purchase vouchers",
+          description: "Please sign in at /auth to purchase vouchers",
           variant: "destructive",
         });
         return;
       }
 
-      // For demo, using $50 voucher
-      const amount = 5000; // $50 in cents
-      const fee = 250; // $2.50 fee
-
-      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-        body: {
-          purpose: 'voucher',
-          refId: 'new',
-          amountCents: amount + fee,
-          fee,
-          description: 'Chip Voucher Purchase'
-        }
-      });
-
-      if (error) throw error;
-
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to load');
-
-      const { error: stripeError } = await stripe.confirmPayment({
-        clientSecret: data.clientSecret,
-        confirmParams: {
-          return_url: `${window.location.origin}/wallet`,
-        },
-      });
-
-      if (stripeError) {
-        throw stripeError;
-      }
-    } catch (error) {
-      console.error('Error purchasing voucher:', error);
       toast({
-        title: "Payment Error",
-        description: "Failed to process payment",
+        title: "Feature Coming Soon",
+        description: "Chip voucher purchases will be available soon through secure payment processing",
+      });
+    } catch (error) {
+      console.error('Error with voucher purchase:', error);
+      toast({
+        title: "Error",
+        description: "Unable to process request",
         variant: "destructive",
       });
     }
@@ -240,8 +216,9 @@ export const WalletPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
-      <div className="max-w-md mx-auto px-4 space-y-6">
+    <AuthGuard requireAuth>
+      <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
+        <div className="max-w-md mx-auto px-4 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-casino-charcoal">
@@ -391,7 +368,8 @@ export const WalletPage = () => {
             </p>
           </CardContent>
         </Card>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 };

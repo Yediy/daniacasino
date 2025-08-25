@@ -654,13 +654,6 @@ export type Database = {
             referencedRelation: "poker_tables"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "poker_table_players_table_id_fkey"
-            columns: ["table_id"]
-            isOneToOne: false
-            referencedRelation: "poker_tables_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       poker_tables: {
@@ -920,48 +913,7 @@ export type Database = {
       }
     }
     Views: {
-      poker_tables_public: {
-        Row: {
-          floor_zone: string | null
-          game: string | null
-          id: string | null
-          max_seats: number | null
-          name: string | null
-          open_seats: number | null
-          players: number | null
-          stakes: string | null
-          status: string | null
-          updated_at: string | null
-          wait_count: number | null
-        }
-        Insert: {
-          floor_zone?: string | null
-          game?: string | null
-          id?: string | null
-          max_seats?: number | null
-          name?: string | null
-          open_seats?: number | null
-          players?: number | null
-          stakes?: string | null
-          status?: string | null
-          updated_at?: string | null
-          wait_count?: number | null
-        }
-        Update: {
-          floor_zone?: string | null
-          game?: string | null
-          id?: string | null
-          max_seats?: number | null
-          name?: string | null
-          open_seats?: number | null
-          players?: number | null
-          stakes?: string | null
-          status?: string | null
-          updated_at?: string | null
-          wait_count?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never
