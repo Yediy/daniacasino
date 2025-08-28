@@ -1188,6 +1188,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_user_permission: {
+        Args: {
+          required_role: Database["public"]["Enums"]["app_role"]
+          resource_user_id?: string
+        }
+        Returns: boolean
+      }
       get_public_poker_tables: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1214,6 +1221,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_sensitive_action: {
+        Args: {
+          action_type: string
+          details?: Json
+          resource_id: string
+          resource_type: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
