@@ -15,6 +15,8 @@ import { Navigation, NavigationTab } from "@/components/Navigation";
 import { Home } from "@/pages/Home";
 import { Poker } from "@/pages/Poker";
 import { Gaming } from "@/pages/Gaming";
+import { GamingLive } from "@/pages/GamingLive";
+import { PokerLive } from "@/pages/PokerLive";
 import { Dining } from "@/pages/Dining";
 import { Entertainment } from "@/pages/Entertainment";
 import { Visit } from "@/pages/Visit";
@@ -104,6 +106,16 @@ const App = () => {
     // Check for slots live access  
     if (activeTab === "slots") {
       return <SlotsLive />;
+    }
+
+    // Check for gaming live access
+    if (activeTab === "gaming-live") {
+      return <GamingLive />;
+    }
+
+    // Check for poker live access
+    if (activeTab === "poker-live") {
+      return <PokerLive />;
     }
 
     switch (activeTab) {
