@@ -3,28 +3,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TicketCard } from "@/components/TicketCard";
 import { TicketPurchaseDialog } from "@/components/TicketPurchaseDialog";
-import { Calendar, Search, Filter } from "lucide-react";
+import { Calendar, Clock, MapPin, Search, Ticket, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-
 
 interface Event {
   id: string;
   title: string;
-  category: string;
+  description?: string;
   event_date: string;
   event_time: string;
   venue: string;
+  category: string;
   price: number;
   fee: number;
   inventory: number;
-  hero_img?: string;
-  description?: string;
   onsale: boolean;
+  hero_img?: string;
+  created_at: string;
 }
 
 export const Tickets = () => {
@@ -35,6 +34,14 @@ export const Tickets = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  const categories = [
+    { id: "all", label: "All Events" },
+    { id: "comedy", label: "Comedy" },
+    { id: "music", label: "Music" },
+    { id: "special", label: "Special Events" },
+    { id: "sports", label: "Sports" }
+  ];
 
   useEffect(() => {
     fetchEvents();
@@ -50,6 +57,7 @@ export const Tickets = () => {
         .order('event_date', { ascending: true });
 
       if (error) throw error;
+
       setEvents(data || []);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -71,20 +79,18 @@ export const Tickets = () => {
   const handlePurchaseSuccess = () => {
     toast({
       title: "Tickets Purchased!",
-      description: "Your tickets have been added to your wallet",
+      description: "Check your wallet for your tickets",
     });
-    // Refresh events to update inventory
-    fetchEvents();
+    setDialogOpen(false);
+    fetchEvents(); // Refresh to update inventory
   };
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description?.toLowerCase().includes(searchTerm.toLowerCase());
+                         event.venue.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "all" || event.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  const categories = ["all", "concert", "comedy", "tribute", "special"];
 
   if (loading) {
     return (
@@ -102,81 +108,108 @@ export const Tickets = () => {
         {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-casino-charcoal">
-            Event Tickets
+            Events & Tickets
           </h2>
           <p className="text-muted-foreground">
-            Live entertainment at Stage 954
+            Live entertainment at Dania Beach
           </p>
         </div>
 
-        {/* Search and Filter */}
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search events..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-5">
-              {categories.map((category) => (
-                <TabsTrigger key={category} value={category} className="text-xs">
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search events or venues..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
-        {/* Events Grid */}
-        <div className="space-y-4">
-          {filteredEvents.length === 0 ? (
-            <Card className="shadow-elegant">
-              <CardContent className="p-6 text-center">
-                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-casino-charcoal mb-2">
-                  No Events Found
-                </h3>
-                <p className="text-muted-foreground">
-                  {searchTerm || selectedCategory !== "all" 
-                    ? "Try adjusting your search or filter" 
-                    : "Check back soon for upcoming events"}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredEvents.map((event) => (
+        {/* Categories */}
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+            <TabsTrigger value="comedy" className="text-xs">Comedy</TabsTrigger>
+            <TabsTrigger value="music" className="text-xs">Music</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="space-y-4 mt-6">
+            {filteredEvents.length === 0 ? (
+              <Card className="shadow-elegant">
+                <CardContent className="p-6 text-center">
+                  <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-casino-charcoal mb-2">
+                    No Events Found
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {searchTerm ? "Try adjusting your search terms" : "No upcoming events at this time"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              filteredEvents.map((event) => (
+                <TicketCard
+                  key={event.id}
+                  event={event}
+                  onBuyTicket={handleBuyTicket}
+                />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="comedy" className="space-y-4 mt-6">
+            {filteredEvents.filter(e => e.category === 'comedy').map((event) => (
               <TicketCard
                 key={event.id}
                 event={event}
                 onBuyTicket={handleBuyTicket}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </TabsContent>
 
-        {/* Info Card */}
+          <TabsContent value="music" className="space-y-4 mt-6">
+            {filteredEvents.filter(e => e.category === 'music').map((event) => (
+              <TicketCard
+                key={event.id}
+                event={event}
+                onBuyTicket={handleBuyTicket}
+              />
+            ))}
+          </TabsContent>
+        </Tabs>
+
+        {/* Ticket Purchase Info */}
         <Card className="shadow-elegant bg-accent/10">
           <CardHeader>
-            <CardTitle className="text-base">Ticket Information</CardTitle>
+            <CardTitle className="text-base flex items-center space-x-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              <span>Ticket Information</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>• Tickets are delivered instantly to your wallet</p>
-            <p>• Present barcode at venue entrance</p>
-            <p>• Refunds available up to 24 hours before event</p>
-            <p>• Contact support for assistance</p>
+          <CardContent className="space-y-3">
+            <div className="text-sm space-y-2">
+              <div className="flex items-center space-x-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">All ticket sales are final</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">Digital tickets sent to your wallet</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                <span className="text-muted-foreground">Show your barcode at the venue</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Purchase Dialog */}
         <TicketPurchaseDialog
+          event={selectedEvent}
           open={dialogOpen}
           onOpenChange={setDialogOpen}
-          event={selectedEvent}
           onSuccess={handlePurchaseSuccess}
         />
       </div>

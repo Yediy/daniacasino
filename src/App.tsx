@@ -8,6 +8,8 @@ import { Session, User } from "@supabase/supabase-js";
 import { AgeGate } from "@/components/AgeGate";
 import { Auth } from "@/pages/Auth";
 import { Admin } from "@/pages/Admin";
+import { Tickets } from "@/pages/Tickets";
+import { SlotsLive } from "@/pages/SlotsLive";
 import { Header } from "@/components/Header";
 import { Navigation, NavigationTab } from "@/components/Navigation";
 import { Home } from "@/pages/Home";
@@ -91,6 +93,16 @@ const App = () => {
     // Check for admin access
     if (activeTab === "admin") {
       return <Admin />;
+    }
+
+    // Check for tickets access
+    if (activeTab === "tickets") {
+      return <Tickets />;
+    }
+
+    // Check for slots live access  
+    if (activeTab === "slots") {
+      return <SlotsLive />;
     }
 
     switch (activeTab) {
