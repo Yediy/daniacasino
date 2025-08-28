@@ -22,6 +22,9 @@ verify_jwt = true
 [functions.redeem-order]
 verify_jwt = true
 
+[functions.update-user-role]
+verify_jwt = true
+
 [functions.audit-log]
 verify_jwt = true
 

@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+// Security Fix: Restrict CORS for staff-only functions
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -157,23 +158,21 @@ serve(async (req) => {
         }
       });
 
-    // Broadcast update to kitchen and customer
-    await supabaseClient.channel('kitchen-updates').send({
+    // Security Fix: Use scoped channels to prevent data leakage
+    await supabaseClient.channel(`kitchen:${order.vendor_id}`).send({
       type: 'broadcast',
       event: 'order_picked_up',
       payload: {
         orderId: order.id,
-        pickup_code,
-        pickedUpBy: staffUser.id
+        pickup_code
       }
     });
 
-    await supabaseClient.channel('wallet-updates').send({
+    await supabaseClient.channel(`wallet:${order.user_id}`).send({
       type: 'broadcast',
       event: 'order_picked_up',
       payload: {
-        orderId: order.id,
-        userId: order.user_id
+        orderId: order.id
       }
     });
 

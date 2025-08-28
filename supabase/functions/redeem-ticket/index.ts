@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+// Security Fix: Restrict CORS for staff-only functions
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
@@ -180,14 +181,14 @@ serve(async (req) => {
         }
       });
 
-    // Broadcast update
-    await supabaseClient.channel('staff-updates').send({
+    // Security Fix: Use user-specific channel and limit broadcast data
+    await supabaseClient.channel(`wallet:${ticket.user_id}`).send({
       type: 'broadcast',
       event: 'ticket_redeemed',
       payload: {
         ticketId: ticket.id,
-        eventTitle: ticket.events.title,
-        redeemedBy: staffUser.id
+        eventTitle: ticket.events?.title,
+        redeemedAt: redeemTime
       }
     });
 

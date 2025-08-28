@@ -66,7 +66,38 @@ serve(async (req) => {
       return new Response("Webhook signature verification failed", { status: 400 });
     }
 
-    logStep("Event type", { type: event.type });
+    logStep("Event type", { type: event.type, id: event.id });
+
+    // Security Fix: Check for duplicate webhook events (idempotency)
+    const { data: existingEvent, error: eventCheckError } = await supabaseClient
+      .from('webhook_events')
+      .select('id')
+      .eq('id', event.id)
+      .single();
+
+    if (eventCheckError && eventCheckError.code !== 'PGRST116') {
+      logStep('Error checking for duplicate event', { error: eventCheckError });
+      return new Response('Database error', { status: 500, headers: corsHeaders });
+    }
+
+    if (existingEvent) {
+      logStep('Duplicate webhook event, skipping processing', { eventId: event.id });
+      return new Response('OK - Already processed', { status: 200, headers: corsHeaders });
+    }
+
+    // Record this webhook event to prevent duplicate processing
+    const { error: insertEventError } = await supabaseClient
+      .from('webhook_events')
+      .insert({
+        id: event.id,
+        event_type: event.type,
+        processed: false
+      });
+
+    if (insertEventError) {
+      logStep('Failed to record webhook event', { error: insertEventError });
+      return new Response('Database error', { status: 500, headers: corsHeaders });
+    }
 
     const currentTime = new Date().toISOString();
     const twoHoursLater = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
@@ -118,6 +149,12 @@ serve(async (req) => {
         logStep("Unhandled event type", { type: event.type });
     }
 
+    // Mark webhook event as processed
+    await supabaseClient
+      .from('webhook_events')
+      .update({ processed: true })
+      .eq('id', event.id);
+
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -126,6 +163,15 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
+    
+    // Mark webhook event as failed (keep processed: false for potential retry)
+    if (event?.id) {
+      await supabaseClient
+        .from('webhook_events')
+        .update({ processed: false })
+        .eq('id', event.id);
+    }
+    
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
@@ -149,9 +195,9 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (ticketData) {
-        await broadcastUpdate(supabaseClient, 'wallet-updates', {
+        // Security Fix: Use user-specific channels to prevent data leakage
+        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'ticket_issued',
-          userId,
           ticketId: ticketData.id
         });
       }
@@ -174,9 +220,9 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (entryData) {
-        await broadcastUpdate(supabaseClient, 'wallet-updates', {
+        // Security Fix: Use user-specific channels to prevent data leakage
+        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'entry_issued',
-          userId,
           entryId: entryData.id
         });
       }
@@ -198,9 +244,9 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (voucherData) {
-        await broadcastUpdate(supabaseClient, 'wallet-updates', {
+        // Security Fix: Use user-specific channels to prevent data leakage
+        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'voucher_issued',
-          userId,
           voucherId: voucherData.id
         });
       }
@@ -221,14 +267,14 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (orderData) {
-        await broadcastUpdate(supabaseClient, 'kitchen-updates', {
+        // Security Fix: Use scoped channels to prevent data leakage
+        await broadcastUpdate(supabaseClient, `kitchen:${orderData.vendor_id}`, {
           type: 'order_placed',
           orderId: orderData.id
         });
         
-        await broadcastUpdate(supabaseClient, 'wallet-updates', {
+        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'order_placed',
-          userId,
           orderId: orderData.id
         });
       }

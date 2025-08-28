@@ -116,9 +116,11 @@ serve(async (req) => {
         });
         break;
       case 'order':
+        // Security Fix: Don't mark order as 'placed' until payment is confirmed via webhook
+        // Only set payment intent ID and keep status as pending
         await supabaseClient.from('orders').update({
-          stripe_payment_intent_id: paymentIntent.id,
-          status: 'placed'
+          stripe_payment_intent_id: paymentIntent.id
+          // status remains 'cart' until webhook confirms payment
         }).eq('id', refId).eq('user_id', user.id);
         break;
     }

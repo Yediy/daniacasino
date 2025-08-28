@@ -29,6 +29,7 @@ export const AuthGuard = ({
 }: AuthGuardProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<'Admin' | 'Staff' | 'User' | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +46,7 @@ export const AuthGuard = ({
             fetchUserProfile(session.user.id);
           }, 0);
         } else {
+          setUserRole(null);
           setProfile(null);
           setLoading(false);
         }
