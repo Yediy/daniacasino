@@ -9,25 +9,25 @@ All colors MUST be HSL.
 @layer base {
   :root {
     --background: 0 0% 98%;
-    --foreground: 0 0% 15%;
+    --foreground: 220 15% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card-foreground: 220 15% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover-foreground: 220 15% 8%;
 
-    --primary: 42 44% 58%;
+    --primary: 220 15% 8%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 42 15% 92%;
-    --secondary-foreground: 0 0% 25%;
+    --secondary-foreground: 220 15% 8%;
 
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 42 20% 88%;
-    --accent-foreground: 0 0% 25%;
+    --accent: 42 44% 58%;
+    --accent-foreground: 220 15% 8%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -35,6 +35,11 @@ All colors MUST be HSL.
     --border: 0 0% 90%;
     --input: 0 0% 94%;
     --ring: 42 44% 58%;
+
+    /* Success, Warning, Danger from spec */
+    --success: 142 76% 36%;
+    --warning: 38 92% 50%;
+    --danger: 0 84% 60%;
 
     /* Casino Theme Colors - Luxury Edition */
     --casino-gold: 42 44% 58%;

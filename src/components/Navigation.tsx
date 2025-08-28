@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin, Wallet, Shield } from "lucide-react";
+import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin, Wallet, Shield, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 
-export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "visit" | "wallet" | "admin" | "tickets" | "slots";
+export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "jai-alai" | "visit" | "wallet" | "admin" | "tickets" | "slots";
 
 interface NavigationProps {
   activeTab: NavigationTab;
@@ -17,7 +17,7 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
     { id: "tickets" as const, label: "Tickets", icon: Calendar },
     { id: "poker" as const, label: "Poker", icon: Spade },
     { id: "slots" as const, label: "Slots", icon: Gamepad2 },
-    { id: "dining" as const, label: "Dining", icon: Utensils },
+    { id: "jai-alai" as const, label: "Jai-Alai", icon: Zap },
     { id: "visit" as const, label: "Visit", icon: MapPin },
   ];
 

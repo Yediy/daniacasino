@@ -18,6 +18,7 @@ import { Gaming } from "@/pages/Gaming";
 import { Dining } from "@/pages/Dining";
 import { Entertainment } from "@/pages/Entertainment";
 import { Visit } from "@/pages/Visit";
+import { JaiAlai } from "@/pages/JaiAlai";
 import { WalletPage } from "@/pages/Wallet";
 
 const queryClient = new QueryClient();
@@ -116,6 +117,8 @@ const App = () => {
         return <Dining />;
       case "entertainment":
         return <Entertainment />;
+      case "jai-alai":
+        return <JaiAlai />;
       case "visit":
         return <Visit />;
       default:
