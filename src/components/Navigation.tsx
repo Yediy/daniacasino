@@ -41,7 +41,7 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elegant z-50">
-      <div className={`grid grid-cols-${tabs.length} max-w-md mx-auto`}>
+      <div className="flex justify-between items-center max-w-md mx-auto px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -51,10 +51,10 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-1 transition-all duration-200",
+                "flex flex-col items-center justify-center py-3 px-2 transition-all duration-200 relative flex-1",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-casino-charcoal"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className={cn(
