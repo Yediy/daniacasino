@@ -354,6 +354,53 @@ export type Database = {
         }
         Relationships: []
       }
+      game_history: {
+        Row: {
+          bet_amount: number | null
+          game_data: Json | null
+          game_type: string
+          id: string
+          outcome: string | null
+          payout_amount: number | null
+          played_at: string
+          session_id: string | null
+          table_id: string | null
+          user_id: string
+        }
+        Insert: {
+          bet_amount?: number | null
+          game_data?: Json | null
+          game_type: string
+          id?: string
+          outcome?: string | null
+          payout_amount?: number | null
+          played_at?: string
+          session_id?: string | null
+          table_id?: string | null
+          user_id: string
+        }
+        Update: {
+          bet_amount?: number | null
+          game_data?: Json | null
+          game_type?: string
+          id?: string
+          outcome?: string | null
+          payout_amount?: number | null
+          played_at?: string
+          session_id?: string | null
+          table_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_history_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "player_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jai_alai_streams: {
         Row: {
           age_limit: string | null
@@ -390,6 +437,36 @@ export type Database = {
           start_time?: string | null
           status?: string | null
           title?: string
+        }
+        Relationships: []
+      }
+      loyalty_transactions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          points_change: number
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points_change: number
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          points_change?: number
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -567,6 +644,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      player_preferences: {
+        Row: {
+          auto_rebuy: boolean | null
+          created_at: string
+          default_tip_percentage: number | null
+          id: string
+          notification_settings: Json | null
+          privacy_settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_rebuy?: boolean | null
+          created_at?: string
+          default_tip_percentage?: number | null
+          id?: string
+          notification_settings?: Json | null
+          privacy_settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_rebuy?: boolean | null
+          created_at?: string
+          default_tip_percentage?: number | null
+          id?: string
+          notification_settings?: Json | null
+          privacy_settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      player_sessions: {
+        Row: {
+          created_at: string
+          game_type: string
+          id: string
+          session_end: string | null
+          session_start: string
+          status: string | null
+          table_id: string | null
+          total_buy_in: number | null
+          total_cash_out: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_type: string
+          id?: string
+          session_end?: string | null
+          session_start?: string
+          status?: string | null
+          table_id?: string | null
+          total_buy_in?: number | null
+          total_cash_out?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game_type?: string
+          id?: string
+          session_end?: string | null
+          session_start?: string
+          status?: string | null
+          table_id?: string | null
+          total_buy_in?: number | null
+          total_cash_out?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       poker_entries: {
         Row: {
@@ -911,6 +1063,45 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to_staff_id: string | null
+          created_at: string
+          description: string
+          id: string
+          priority: string | null
+          resolved_at: string | null
+          status: string | null
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to_staff_id?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          priority?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to_staff_id?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          priority?: string | null
+          resolved_at?: string | null
+          status?: string | null
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -931,6 +1122,42 @@ export type Database = {
           created_by?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          processed_at: string | null
+          reference_id: string | null
+          status: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          processed_at?: string | null
+          reference_id?: string | null
+          status?: string | null
+          transaction_type?: string
           user_id?: string
         }
         Relationships: []
