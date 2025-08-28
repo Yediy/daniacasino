@@ -41,7 +41,7 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-elegant z-50">
-      <div className={`grid max-w-md mx-auto ${tabs.length === 6 ? 'grid-cols-6' : `grid-cols-${tabs.length}`}`}>
+      <div className={`grid grid-cols-${tabs.length} max-w-md mx-auto`}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
