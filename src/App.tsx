@@ -17,6 +17,9 @@ import { Poker } from "@/pages/Poker";
 import { Gaming } from "@/pages/Gaming";
 import { GamingLive } from "@/pages/GamingLive";
 import { PokerLive } from "@/pages/PokerLive";
+import { KitchenDashboard } from "@/pages/KitchenDashboard";
+import { StaffHeatmap } from "@/pages/StaffHeatmap";
+import { DiningEnhanced } from "@/pages/DiningEnhanced";
 import { Dining } from "@/pages/Dining";
 import { Entertainment } from "@/pages/Entertainment";
 import { Visit } from "@/pages/Visit";
@@ -116,6 +119,21 @@ const App = () => {
     // Check for poker live access
     if (activeTab === "poker-live") {
       return <PokerLive />;
+    }
+
+    // Check for kitchen dashboard access
+    if (activeTab === "kitchen") {
+      return <KitchenDashboard />;
+    }
+
+    // Check for staff heatmap access
+    if (activeTab === "staff-heatmap") {
+      return <StaffHeatmap />;
+    }
+
+    // Check for enhanced dining access
+    if (activeTab === "dining-enhanced") {
+      return <DiningEnhanced />;
     }
 
     switch (activeTab) {

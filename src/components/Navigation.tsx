@@ -3,7 +3,7 @@ import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin, Wallet, Shield, Zap 
 import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 
-export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "jai-alai" | "visit" | "wallet" | "admin" | "tickets" | "slots" | "gaming-live" | "poker-live";
+export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "jai-alai" | "visit" | "wallet" | "admin" | "tickets" | "slots" | "gaming-live" | "poker-live" | "kitchen" | "staff-heatmap" | "dining-enhanced";
 
 interface NavigationProps {
   activeTab: NavigationTab;
@@ -17,6 +17,7 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
     { id: "tickets" as const, label: "Tickets", icon: Calendar },
     { id: "poker-live" as const, label: "Poker", icon: Spade },
     { id: "gaming-live" as const, label: "Gaming", icon: Gamepad2 },
+    { id: "dining-enhanced" as const, label: "Dining", icon: Utensils },
     { id: "jai-alai" as const, label: "Jai-Alai", icon: Zap },
     { id: "visit" as const, label: "Visit", icon: MapPin },
   ];
