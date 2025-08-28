@@ -180,10 +180,53 @@ serve(async (req) => {
 });
 
 async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId: string, userId: string, paymentId: string, currentTime: string, twoHoursLater: string) {
+  // SECURITY FIX: Verify payment amount matches expected amount before issuing entitlements
+  let expectedAmount = 0;
+
   switch (purpose) {
     case 'event':
+      // Verify event exists and calculate expected amount
+      const { data: eventData, error: eventError } = await supabaseClient
+        .from('events')
+        .select('price, fee')
+        .eq('id', refId)
+        .single();
+
+      if (eventError || !eventData) {
+        logStep("ERROR: Event verification failed", { refId, error: eventError });
+        return;
+      }
+
+      const { data: ticketData, error: ticketError } = await supabaseClient
+        .from('event_tickets')
+        .select('qty, amount')
+        .eq('stripe_payment_intent_id', paymentId)
+        .single();
+
+      if (ticketError || !ticketData) {
+        logStep("ERROR: Ticket data not found", { paymentId, error: ticketError });
+        return;
+      }
+
+      expectedAmount = (eventData.price + (eventData.fee || 0)) * ticketData.qty;
+      
+      // Verify stored amount matches calculated amount
+      if (Math.abs(ticketData.amount - expectedAmount) > 1) {
+        logStep("ERROR: Event payment amount mismatch", { 
+          stored: ticketData.amount, 
+          expected: expectedAmount,
+          paymentId 
+        });
+        // Set status to payment_mismatch instead of issuing barcode
+        await supabaseClient
+          .from('event_tickets')
+          .update({ status: 'payment_mismatch' })
+          .eq('stripe_payment_intent_id', paymentId);
+        return;
+      }
+
       const barcode = generateBarcode('TICKET', { paymentId });
-      const { data: ticketData } = await supabaseClient
+      const { data: updatedTicket } = await supabaseClient
         .from('event_tickets')
         .update({ 
           status: 'paid', 
@@ -194,17 +237,55 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .select()
         .single();
       
-      if (ticketData) {
-        // Security Fix: Use user-specific channels to prevent data leakage
+      if (updatedTicket) {
+        // SECURITY FIX: Use user-specific channels to prevent data leakage
         await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'ticket_issued',
-          ticketId: ticketData.id
+          ticketId: updatedTicket.id
         });
       }
       logStep("Event ticket updated", { barcode });
       break;
 
     case 'tourney':
+      // Verify tournament exists and calculate expected amount
+      const { data: tourneyData, error: tourneyError } = await supabaseClient
+        .from('poker_tourneys')
+        .select('buyin, fee')
+        .eq('id', refId)
+        .single();
+
+      if (tourneyError || !tourneyData) {
+        logStep("ERROR: Tournament verification failed", { refId, error: tourneyError });
+        return;
+      }
+
+      const { data: entryRecord, error: entryError } = await supabaseClient
+        .from('poker_entries')
+        .select('amount')
+        .eq('stripe_payment_intent_id', paymentId)
+        .single();
+
+      if (entryError || !entryRecord) {
+        logStep("ERROR: Poker entry not found", { paymentId, error: entryError });
+        return;
+      }
+
+      expectedAmount = tourneyData.buyin + (tourneyData.fee || 0);
+      
+      if (Math.abs(entryRecord.amount - expectedAmount) > 1) {
+        logStep("ERROR: Tournament payment amount mismatch", { 
+          stored: entryRecord.amount, 
+          expected: expectedAmount,
+          paymentId 
+        });
+        await supabaseClient
+          .from('poker_entries')
+          .update({ status: 'payment_mismatch' })
+          .eq('stripe_payment_intent_id', paymentId);
+        return;
+      }
+
       const tourneyBarcode = generateBarcode('TOURNEY', { paymentId });
       const { data: entryData } = await supabaseClient
         .from('poker_entries')
@@ -220,7 +301,7 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (entryData) {
-        // Security Fix: Use user-specific channels to prevent data leakage
+        // SECURITY FIX: Use user-specific channels to prevent data leakage
         await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
           type: 'entry_issued',
           entryId: entryData.id

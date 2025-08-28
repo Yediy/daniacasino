@@ -41,13 +41,125 @@ serve(async (req) => {
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     const requestBody = await req.json();
-    const { purpose, refId, amountCents, description } = requestBody;
+    const { purpose, refId, description } = requestBody;
     
-    if (!purpose || !refId || !amountCents) {
-      throw new Error("Missing required fields: purpose, refId, amountCents");
+    if (!purpose || !refId) {
+      throw new Error("Missing required fields: purpose, refId");
     }
 
-    logStep("Payment request", { purpose, refId, amountCents, description });
+    // SECURITY FIX: Calculate amounts server-side, never trust client input
+    let calculatedAmount = 0;
+    let fee = 0;
+
+    logStep("Payment request received", { purpose, refId, description });
+
+    // Server-side price calculation based on purpose
+    switch (purpose) {
+      case 'event':
+        const { data: eventData, error: eventError } = await supabaseClient
+          .from('events')
+          .select('price, fee, inventory')
+          .eq('id', refId)
+          .single();
+        
+        if (eventError || !eventData) {
+          throw new Error(`Event not found or invalid: ${refId}`);
+        }
+        
+        const qty = requestBody.qty || 1;
+        if (eventData.inventory < qty) {
+          throw new Error("Insufficient inventory for this event");
+        }
+        
+        calculatedAmount = (eventData.price + (eventData.fee || 0)) * qty;
+        logStep("Event price calculated", { price: eventData.price, fee: eventData.fee, qty, total: calculatedAmount });
+        break;
+
+      case 'tourney':
+        const { data: tourneyData, error: tourneyError } = await supabaseClient
+          .from('poker_tourneys')
+          .select('buyin, fee, seats_left')
+          .eq('id', refId)
+          .single();
+        
+        if (tourneyError || !tourneyData) {
+          throw new Error(`Tournament not found or invalid: ${refId}`);
+        }
+        
+        if (tourneyData.seats_left <= 0) {
+          throw new Error("Tournament is sold out");
+        }
+        
+        calculatedAmount = tourneyData.buyin + (tourneyData.fee || 0);
+        logStep("Tournament price calculated", { buyin: tourneyData.buyin, fee: tourneyData.fee, total: calculatedAmount });
+        break;
+
+      case 'voucher':
+        const { data: settingsData } = await supabaseClient
+          .from('settings')
+          .select('min_chip_voucher, max_chip_voucher')
+          .eq('id', 'global')
+          .single();
+        
+        const requestedAmount = requestBody.amount;
+        if (!requestedAmount || requestedAmount < (settingsData?.min_chip_voucher || 2000)) {
+          throw new Error(`Minimum voucher amount is $${((settingsData?.min_chip_voucher || 2000) / 100).toFixed(2)}`);
+        }
+        
+        if (requestedAmount > (settingsData?.max_chip_voucher || 100000)) {
+          throw new Error(`Maximum voucher amount is $${((settingsData?.max_chip_voucher || 100000) / 100).toFixed(2)}`);
+        }
+        
+        // Calculate fee (e.g., 3% + $2.99)
+        fee = Math.round(requestedAmount * 0.03 + 299);
+        calculatedAmount = requestedAmount + fee;
+        logStep("Voucher price calculated", { amount: requestedAmount, fee, total: calculatedAmount });
+        break;
+
+      case 'order':
+        const { data: orderData, error: orderError } = await supabaseClient
+          .from('orders')
+          .select(`
+            id, subtotal, tax, tip, fee, status, user_id,
+            order_items (
+              qty,
+              menu_item_id,
+              menu_items (price)
+            )
+          `)
+          .eq('id', refId)
+          .eq('user_id', user.id)
+          .eq('status', 'cart')
+          .single();
+        
+        if (orderError || !orderData) {
+          throw new Error("Order not found or not in cart status");
+        }
+        
+        // Recalculate order total from menu items to prevent tampering
+        let recalculatedSubtotal = 0;
+        for (const item of orderData.order_items) {
+          recalculatedSubtotal += item.qty * item.menu_items.price;
+        }
+        
+        const recalculatedTotal = recalculatedSubtotal + (orderData.tax || 0) + (orderData.tip || 0) + (orderData.fee || 0);
+        
+        // Verify the stored total matches our calculation
+        if (Math.abs(orderData.subtotal - recalculatedSubtotal) > 1) {
+          throw new Error("Order subtotal mismatch - please refresh and try again");
+        }
+        
+        calculatedAmount = recalculatedTotal;
+        logStep("Order price validated", { 
+          storedSubtotal: orderData.subtotal, 
+          recalculatedSubtotal, 
+          total: calculatedAmount 
+        });
+        break;
+
+      default:
+        throw new Error(`Invalid payment purpose: ${purpose}`);
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -66,9 +178,9 @@ serve(async (req) => {
       logStep("New customer created", { customerId });
     }
 
-    // Create payment intent
+    // Create payment intent using server-calculated amount
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
+      amount: calculatedAmount,
       currency: "usd",
       customer: customerId,
       description: description || `Casino payment - ${purpose}`,
@@ -92,7 +204,7 @@ serve(async (req) => {
           user_id: user.id,
           event_id: refId,
           qty: requestBody.qty || 1,
-          amount: amountCents,
+          amount: calculatedAmount,
           status: 'pending',
           stripe_payment_intent_id: paymentIntent.id
         });
@@ -101,7 +213,7 @@ serve(async (req) => {
         await supabaseClient.from('poker_entries').insert({
           user_id: user.id,
           tourney_id: refId,
-          amount: amountCents,
+          amount: calculatedAmount,
           status: 'pending',
           stripe_payment_intent_id: paymentIntent.id
         });
@@ -109,8 +221,8 @@ serve(async (req) => {
       case 'voucher':
         await supabaseClient.from('chip_vouchers').insert({
           user_id: user.id,
-          amount: amountCents - (requestBody.fee || 0),
-          fee: requestBody.fee || 0,
+          amount: calculatedAmount - fee,
+          fee: fee,
           status: 'pending',
           stripe_payment_intent_id: paymentIntent.id
         });

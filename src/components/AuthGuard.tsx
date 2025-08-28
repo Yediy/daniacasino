@@ -30,7 +30,6 @@ export const AuthGuard = ({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<'Admin' | 'Staff' | 'User' | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,13 +40,12 @@ export const AuthGuard = ({
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Defer profile fetch to prevent deadlocks
+          // Defer role fetch to prevent deadlocks
           setTimeout(() => {
-            fetchUserProfile(session.user.id);
+            fetchUserRole(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
-          setProfile(null);
           setLoading(false);
         }
       }
@@ -59,7 +57,7 @@ export const AuthGuard = ({
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserRole(session.user.id);
       } else {
         setLoading(false);
       }
@@ -68,16 +66,9 @@ export const AuthGuard = ({
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserRole = async (userId: string) => {
     try {
-      // First try to get from profiles (legacy)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('tier, name')
-        .eq('id', userId)
-        .single();
-
-      // Also get from new user_roles table
+      // SECURITY FIX: Use only user_roles table for authorization
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -86,15 +77,12 @@ export const AuthGuard = ({
         .limit(1)
         .single();
 
-      // Use role data if available, fallback to profile tier
-      const userRole = roleData?.role || profileData?.tier || 'User';
-      
-      setProfile({
-        tier: userRole as 'User' | 'Staff' | 'Admin',
-        name: profileData?.name
-      });
+      // Set role or default to 'User'
+      const userRole = roleData?.role || 'User';
+      setUserRole(userRole as 'Admin' | 'Staff' | 'User');
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      console.error('Error in fetchUserRole:', error);
+      setUserRole('User'); // Default to User role on error
     } finally {
       setLoading(false);
     }
@@ -141,7 +129,7 @@ export const AuthGuard = ({
           <p className="text-sm text-muted-foreground text-center mb-4">
             Required role: {requireRole}
             <br />
-            Your role: {profile?.tier || 'Unknown'}
+            Your role: {userRole || 'Unknown'}
           </p>
           <Button 
             onClick={() => window.location.href = '/'}
@@ -174,13 +162,13 @@ export const AuthGuard = ({
   }
 
   // Check role requirement
-  if (requireRole && (!profile || profile.tier !== requireRole)) {
+  if (requireRole && (!userRole || userRole !== requireRole)) {
     // Staff and Admin can access User areas
-    if (requireRole === 'User' && profile && (profile.tier === 'Staff' || profile.tier === 'Admin')) {
+    if (requireRole === 'User' && userRole && (userRole === 'Staff' || userRole === 'Admin')) {
       return <>{children}</>;
     }
     // Admin can access Staff areas
-    if (requireRole === 'Staff' && profile && profile.tier === 'Admin') {
+    if (requireRole === 'Staff' && userRole && userRole === 'Admin') {
       return <>{children}</>;
     }
     // Otherwise, access denied

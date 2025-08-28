@@ -54,16 +54,18 @@ export const Admin = () => {
         return;
       }
 
-      // Check both profiles table (legacy) and new user_roles table
-      const [profileResult, roleResult] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', user.id).single(),
-        supabase.from('user_roles').select('role').eq('user_id', user.id).order('role', { ascending: false }).limit(1).single()
-      ]);
+      // SECURITY FIX: Use only user_roles table for authorization
+      const roleResult = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .order('role', { ascending: false })
+        .limit(1)
+        .single();
 
-      const profile = profileResult.data;
-      const userRole = roleResult.data?.role || profile?.tier || 'User';
+      const userRole = roleResult.data?.role || 'User';
 
-      if (!profile || (userRole !== 'Admin' && userRole !== 'Staff')) {
+      if (userRole !== 'Admin' && userRole !== 'Staff') {
         toast({
           title: "Access Denied",
           description: "You don't have admin privileges",
@@ -73,9 +75,20 @@ export const Admin = () => {
         return;
       }
 
+      // Get basic profile info for display
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, name, points, age_verified, created_at')
+        .eq('id', user.id)
+        .single();
+
       setCurrentUser({
-        ...profile,
-        tier: userRole as 'User' | 'Staff' | 'Admin'
+        id: user.id,
+        name: profile?.name,
+        tier: userRole as 'User' | 'Staff' | 'Admin',
+        points: profile?.points || 0,
+        age_verified: profile?.age_verified || false,
+        created_at: profile?.created_at || new Date().toISOString()
       });
     } catch (error) {
       console.error('Error checking admin access:', error);
