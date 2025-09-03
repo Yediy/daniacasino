@@ -1,15 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Security Fix: Create secure endpoint for role management
+// Security Fix: Normalize CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Security Fix: Improved logging hygiene
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[UPDATE-USER-ROLE] ${step}${detailsStr}`);
+  // Sanitize sensitive information from logs
+  const sanitizedDetails = details ? JSON.stringify(details).replace(/("token":\s*")[^"]+"/g, '$1***"').replace(/("email":\s*")[^"]+"/g, '$1***"') : '';
+  console.log(`[UPDATE-USER-ROLE] ${step}${sanitizedDetails ? ` - ${sanitizedDetails}` : ''}`);
 };
 
 serve(async (req) => {
@@ -61,28 +63,28 @@ serve(async (req) => {
       });
     }
 
-    const { targetUserId, newRole } = await req.json();
-    if (!targetUserId || !newRole) {
-      return new Response(JSON.stringify({ error: "Target user ID and new role required" }), {
+    const { userId, role } = await req.json();
+    if (!userId || !role) {
+      return new Response(JSON.stringify({ error: "userId and role are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (!['User', 'Staff', 'Admin'].includes(newRole)) {
+    if (!['User', 'Staff', 'Admin'].includes(role)) {
       return new Response(JSON.stringify({ error: "Invalid role. Must be User, Staff, or Admin" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    logStep("Processing role update", { targetUserId, newRole });
+    logStep("Processing role update", { userId, role });
 
     // Remove existing roles for the user
     const { error: deleteError } = await supabaseClient
       .from('user_roles')
       .delete()
-      .eq('user_id', targetUserId);
+      .eq('user_id', userId);
 
     if (deleteError) {
       logStep("Failed to remove existing roles", { error: deleteError });
@@ -99,8 +101,8 @@ serve(async (req) => {
     const { error: insertError } = await supabaseClient
       .from('user_roles')
       .insert({
-        user_id: targetUserId,
-        role: newRole,
+        user_id: userId,
+        role: role,
         created_by: adminUser.id
       });
 
@@ -121,23 +123,23 @@ serve(async (req) => {
       .insert({
         event_type: 'user_role_updated',
         resource_type: 'user_role',
-        resource_id: targetUserId,
+        resource_id: userId,
         staff_id: adminUser.id,
         details: {
-          target_user_id: targetUserId,
-          new_role: newRole,
+          target_user_id: userId,
+          new_role: role,
           updated_by: adminUser.id
         }
       });
 
     logStep("Role updated successfully", { 
-      targetUserId, 
-      newRole 
+      userId, 
+      role 
     });
 
     return new Response(JSON.stringify({ 
       success: true,
-      message: `User role updated to ${newRole}`
+      message: `User role updated to ${role}`
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

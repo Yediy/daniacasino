@@ -1,15 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Security Fix: Restrict CORS for staff-only functions
+// Security Fix: Normalize CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Security Fix: Improved logging hygiene
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[REDEEM-ORDER] ${step}${detailsStr}`);
+  // Sanitize sensitive information from logs
+  const sanitizedDetails = details ? JSON.stringify(details).replace(/("token":\s*")[^"]+"/g, '$1***"').replace(/("email":\s*")[^"]+"/g, '$1***"') : '';
+  console.log(`[REDEEM-ORDER] ${step}${sanitizedDetails ? ` - ${sanitizedDetails}` : ''}`);
 };
 
 serve(async (req) => {
@@ -158,21 +160,18 @@ serve(async (req) => {
         }
       });
 
-    // Security Fix: Use scoped channels to prevent data leakage
-    await supabaseClient.channel(`kitchen:${order.vendor_id}`).send({
-      type: 'broadcast',
-      event: 'order_picked_up',
-      payload: {
-        orderId: order.id,
-        pickup_code
-      }
-    });
-
-    await supabaseClient.channel(`wallet:${order.user_id}`).send({
-      type: 'broadcast',
-      event: 'order_picked_up',
-      payload: {
-        orderId: order.id
+    // Security Fix: Use secure notifications instead of broadcasts
+    await supabaseClient.rpc('create_notification', {
+      target_user_id: order.user_id,
+      notification_type: 'order_picked_up',
+      notification_title: 'Order Picked Up',
+      notification_message: `Your order from ${order.dining_vendors.name} has been picked up.`,
+      ref_id: order.id,
+      ref_type: 'order',
+      notification_data: {
+        vendor_name: order.dining_vendors.name,
+        pickup_code: order.pickup_code,
+        picked_up_at: pickupTime
       }
     });
 

@@ -544,6 +544,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          message: string
+          read_at: string | null
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message: string
+          read_at?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          message?: string
+          read_at?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           id: string
@@ -1194,6 +1233,18 @@ export type Database = {
           resource_user_id?: string
         }
         Returns: boolean
+      }
+      create_notification: {
+        Args: {
+          notification_data?: Json
+          notification_message: string
+          notification_title: string
+          notification_type: string
+          ref_id?: string
+          ref_type?: string
+          target_user_id: string
+        }
+        Returns: string
       }
       get_public_poker_tables: {
         Args: Record<PropertyKey, never>

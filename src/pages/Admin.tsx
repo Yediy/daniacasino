@@ -144,32 +144,18 @@ export const Admin = () => {
     }
   };
 
+  // Security Fix: Use Edge Function for role updates to ensure proper auditing
   const updateUserTier = async (userId: string, newTier: 'User' | 'Staff' | 'Admin') => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // First, remove existing roles for this user
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      // Then add the new role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ 
-          user_id: userId, 
-          role: newTier,
-          created_by: user?.id 
-        });
+      const { data, error } = await supabase.functions.invoke('update-user-role', {
+        body: { userId, role: newTier }
+      });
 
       if (error) throw error;
 
-      // Also update profiles table for backward compatibility
-      await supabase
-        .from('profiles')
-        .update({ tier: newTier })
-        .eq('id', userId);
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to update user role');
+      }
 
       toast({
         title: "User Updated",
@@ -181,7 +167,7 @@ export const Admin = () => {
       console.error('Error updating user:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: error instanceof Error ? error.message : "Failed to update user role",
         variant: "destructive",
       });
     }

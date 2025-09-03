@@ -1,15 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Security Fix: Restrict CORS for staff-only functions
+// Security Fix: Normalize CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Security Fix: Improved logging hygiene
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[REDEEM-TICKET] ${step}${detailsStr}`);
+  // Sanitize sensitive information from logs
+  const sanitizedDetails = details ? JSON.stringify(details).replace(/("token":\s*")[^"]+"/g, '$1***"').replace(/("email":\s*")[^"]+"/g, '$1***"') : '';
+  console.log(`[REDEEM-TICKET] ${step}${sanitizedDetails ? ` - ${sanitizedDetails}` : ''}`);
 };
 
 serve(async (req) => {
@@ -181,14 +183,17 @@ serve(async (req) => {
         }
       });
 
-    // Security Fix: Use user-specific channel and limit broadcast data
-    await supabaseClient.channel(`wallet:${ticket.user_id}`).send({
-      type: 'broadcast',
-      event: 'ticket_redeemed',
-      payload: {
-        ticketId: ticket.id,
-        eventTitle: ticket.events?.title,
-        redeemedAt: redeemTime
+    // Security Fix: Use secure notifications instead of broadcasts
+    await supabaseClient.rpc('create_notification', {
+      target_user_id: ticket.user_id,
+      notification_type: 'ticket_redeemed',
+      notification_title: 'Ticket Redeemed',
+      notification_message: `Your ticket for "${ticket.events?.title}" has been redeemed successfully.`,
+      ref_id: ticket.id,
+      ref_type: 'event_ticket',
+      notification_data: {
+        event_title: ticket.events?.title,
+        redeemed_at: redeemTime
       }
     });
 

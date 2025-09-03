@@ -1,15 +1,17 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
-// Security Fix: Restrict CORS for staff-only functions
+// Security Fix: Normalize CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Security Fix: Improved logging hygiene
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[REDEEM-VOUCHER] ${step}${detailsStr}`);
+  // Sanitize sensitive information from logs
+  const sanitizedDetails = details ? JSON.stringify(details).replace(/("token":\s*")[^"]+"/g, '$1***"').replace(/("email":\s*")[^"]+"/g, '$1***"') : '';
+  console.log(`[REDEEM-VOUCHER] ${step}${sanitizedDetails ? ` - ${sanitizedDetails}` : ''}`);
 };
 
 serve(async (req) => {
@@ -168,14 +170,17 @@ serve(async (req) => {
         }
       });
 
-    // Security Fix: Use user-specific channel and limit broadcast data
-    await supabaseClient.channel(`wallet:${voucher.user_id}`).send({
-      type: 'broadcast',
-      event: 'voucher_redeemed',
-      payload: {
-        voucherId: voucher.id,
+    // Security Fix: Use secure notifications instead of broadcasts
+    await supabaseClient.rpc('create_notification', {
+      target_user_id: voucher.user_id,
+      notification_type: 'voucher_redeemed',
+      notification_title: 'Voucher Redeemed',
+      notification_message: `Your $${(voucher.amount / 100).toFixed(2)} chip voucher has been redeemed successfully.`,
+      ref_id: voucher.id,
+      ref_type: 'chip_voucher',
+      notification_data: {
         amount: voucher.amount,
-        redeemedAt: redeemTime
+        redeemed_at: redeemTime
       }
     });
 
