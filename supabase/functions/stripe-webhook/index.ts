@@ -2,14 +2,26 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
+// SECURITY FIX: Restrict CORS to specific origins
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://lcfsuhdcexrbqevdojlw.supabase.co",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// SECURITY FIX: Sanitize logs to remove sensitive data
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+  if (details) {
+    // Remove sensitive fields from logs
+    const sanitized = { ...details };
+    delete sanitized.payment_method;
+    delete sanitized.customer_email;
+    delete sanitized.stripe_customer_id;
+    delete sanitized.amount_total;
+    const detailsStr = ` - ${JSON.stringify(sanitized)}`;
+    console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+  } else {
+    console.log(`[STRIPE-WEBHOOK] ${step}`);
+  }
 };
 
 const generateBarcode = (type: string, data: any): string => {
@@ -18,16 +30,17 @@ const generateBarcode = (type: string, data: any): string => {
   return `${type.toUpperCase()}-${timestamp}-${randomPart}`;
 };
 
-const broadcastUpdate = async (supabaseClient: any, channel: string, payload: any) => {
+// SECURITY FIX: Replace unsafe broadcast with database notifications
+const notifyUser = async (supabaseClient: any, userId: string, eventData: any) => {
   try {
-    await supabaseClient.channel(channel).send({
-      type: 'broadcast',
-      event: 'update',
-      payload
+    // Use secure database notification instead of public broadcast
+    await supabaseClient.rpc('notify_wallet_update', {
+      target_user_id: userId,
+      event_data: eventData
     });
-    logStep("WS broadcast sent", { channel, payload });
+    logStep("Database notification sent", { userId });
   } catch (error) {
-    logStep("WS broadcast failed", { error: error.message });
+    logStep("Database notification failed", { error: error.message });
   }
 };
 
@@ -238,10 +251,10 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (updatedTicket) {
-        // SECURITY FIX: Use user-specific channels to prevent data leakage
-        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
-          type: 'ticket_issued',
-          ticketId: updatedTicket.id
+        // SECURITY FIX: Use database notifications instead of broadcasts
+        await notifyUser(supabaseClient, userId, {
+          message: 'Event ticket issued',
+          reference_id: updatedTicket.id
         });
       }
       logStep("Event ticket updated", { barcode });
@@ -301,10 +314,10 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (entryData) {
-        // SECURITY FIX: Use user-specific channels to prevent data leakage
-        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
-          type: 'entry_issued',
-          entryId: entryData.id
+        // SECURITY FIX: Use database notifications instead of broadcasts
+        await notifyUser(supabaseClient, userId, {
+          message: 'Tournament entry issued',
+          reference_id: entryData.id
         });
       }
       logStep("Poker entry updated", { barcode: tourneyBarcode });
@@ -325,10 +338,10 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (voucherData) {
-        // Security Fix: Use user-specific channels to prevent data leakage
-        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
-          type: 'voucher_issued',
-          voucherId: voucherData.id
+        // SECURITY FIX: Use database notifications instead of broadcasts
+        await notifyUser(supabaseClient, userId, {
+          message: 'Chip voucher issued',
+          reference_id: voucherData.id
         });
       }
       logStep("Chip voucher updated", { barcode: voucherBarcode });
@@ -348,15 +361,15 @@ async function handlePaymentSuccess(supabaseClient: any, purpose: string, refId:
         .single();
       
       if (orderData) {
-        // Security Fix: Use scoped channels to prevent data leakage
-        await broadcastUpdate(supabaseClient, `kitchen:${orderData.vendor_id}`, {
-          type: 'order_placed',
-          orderId: orderData.id
+        // SECURITY FIX: Use database notifications instead of broadcasts
+        await notifyUser(supabaseClient, orderData.vendor_id, {
+          message: 'New order placed',
+          reference_id: orderData.id
         });
         
-        await broadcastUpdate(supabaseClient, `wallet:${userId}`, {
-          type: 'order_placed',
-          orderId: orderData.id
+        await notifyUser(supabaseClient, userId, {
+          message: 'Order confirmation',
+          reference_id: orderData.id
         });
       }
       logStep("Order updated", { pickupCode: orderCode });

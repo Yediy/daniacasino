@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { SecureText } from "@/components/SecureText";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -209,7 +210,7 @@ export const Admin = () => {
               Admin Dashboard
             </h1>
             <p className="text-muted-foreground">
-              Welcome, {currentUser.name} ({currentUser.tier})
+              Welcome, <SecureText>{currentUser.name}</SecureText> ({currentUser.tier})
             </p>
           </div>
           <Button onClick={handleSignOut} variant="outline">
@@ -323,7 +324,9 @@ export const Admin = () => {
                   {users.map((user) => (
                     <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <div className="font-medium">{user.name || 'Unnamed User'}</div>
+                        <SecureText className="font-medium">
+                          {user.name || 'Unnamed User'}
+                        </SecureText>
                         <div className="text-sm text-muted-foreground">
                           {user.points} points • {user.age_verified ? 'Age Verified' : 'Not Verified'}
                         </div>
