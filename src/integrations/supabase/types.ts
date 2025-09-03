@@ -1231,6 +1231,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_wallet_update: {
+        Args: { event_data: Json; target_user_id: string }
+        Returns: undefined
+      }
+      sanitize_text: {
+        Args: { input_text: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "User" | "Staff" | "Admin"
