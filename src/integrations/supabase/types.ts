@@ -1247,7 +1247,7 @@ export type Database = {
         Returns: string
       }
       get_public_poker_tables: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           floor_zone: string
           game: string
@@ -1286,10 +1286,7 @@ export type Database = {
         Args: { event_data: Json; target_user_id: string }
         Returns: undefined
       }
-      sanitize_text: {
-        Args: { input_text: string }
-        Returns: string
-      }
+      sanitize_text: { Args: { input_text: string }; Returns: string }
     }
     Enums: {
       app_role: "User" | "Staff" | "Admin"
