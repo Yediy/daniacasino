@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // SECURITY FIX: Restrict CORS to specific origins
 const corsHeaders = {
@@ -41,12 +42,20 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Input validation with Zod
+    const paymentSchema = z.object({
+      purpose: z.enum(['event', 'tourney', 'voucher', 'order'], {
+        errorMap: () => ({ message: "Purpose must be one of: event, tourney, voucher, order" })
+      }),
+      refId: z.string().uuid({ message: "Invalid reference ID format" }),
+      description: z.string().max(500).optional(),
+      qty: z.number().int().positive().max(100).optional(),
+      amount: z.number().int().positive().max(1000000).optional()
+    });
+
     const requestBody = await req.json();
-    const { purpose, refId, description } = requestBody;
-    
-    if (!purpose || !refId) {
-      throw new Error("Missing required fields: purpose, refId");
-    }
+    const validatedData = paymentSchema.parse(requestBody);
+    const { purpose, refId, description } = validatedData;
 
     // SECURITY FIX: Calculate amounts server-side, never trust client input
     let calculatedAmount = 0;
@@ -67,7 +76,7 @@ serve(async (req) => {
           throw new Error(`Event not found or invalid: ${refId}`);
         }
         
-        const qty = requestBody.qty || 1;
+        const qty = validatedData.qty || 1;
         if (eventData.inventory < qty) {
           throw new Error("Insufficient inventory for this event");
         }
@@ -102,7 +111,7 @@ serve(async (req) => {
           .eq('id', 'global')
           .single();
         
-        const requestedAmount = requestBody.amount;
+        const requestedAmount = validatedData.amount;
         if (!requestedAmount || requestedAmount < (settingsData?.min_chip_voucher || 2000)) {
           throw new Error(`Minimum voucher amount is $${((settingsData?.min_chip_voucher || 2000) / 100).toFixed(2)}`);
         }

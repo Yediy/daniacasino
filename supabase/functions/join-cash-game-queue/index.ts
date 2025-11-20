@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // SECURITY FIX: Restrict CORS to specific origins
 const corsHeaders = {
@@ -37,8 +38,14 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { listId, notes } = await req.json();
-    if (!listId) throw new Error("Missing listId");
+    // Input validation with Zod
+    const queueJoinSchema = z.object({
+      listId: z.string().uuid({ message: "Invalid list ID format" }),
+      notes: z.string().max(500).optional()
+    });
+
+    const requestBody = await req.json();
+    const { listId, notes } = queueJoinSchema.parse(requestBody);
 
     // Check if user is already in queue for this game
     const { data: existingQueue } = await supabaseClient

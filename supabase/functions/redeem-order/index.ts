@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // Security Fix: Normalize CORS headers
 const corsHeaders = {
@@ -68,13 +69,15 @@ serve(async (req) => {
       });
     }
 
-    const { pickup_code } = await req.json();
-    if (!pickup_code) {
-      return new Response(JSON.stringify({ error: "Pickup code required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Input validation with Zod
+    const orderRedeemSchema = z.object({
+      pickup_code: z.string()
+        .length(6, { message: "Pickup code must be exactly 6 characters" })
+        .regex(/^[A-Z0-9]+$/, { message: "Pickup code must contain only uppercase letters and numbers" })
+    });
+
+    const requestBody = await req.json();
+    const { pickup_code } = orderRedeemSchema.parse(requestBody);
 
     logStep("Processing pickup code", { pickup_code });
 

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // SECURITY FIX: Restrict CORS to specific origins
 const corsHeaders = {
@@ -37,8 +38,16 @@ serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
-    const { queueId, action } = await req.json();
-    if (!queueId || !action) throw new Error("Missing queueId or action");
+    // Input validation with Zod
+    const queueUpdateSchema = z.object({
+      queueId: z.string().uuid({ message: "Invalid queue ID format" }),
+      action: z.enum(['check_in', 'leave_queue'], {
+        errorMap: () => ({ message: "Action must be either 'check_in' or 'leave_queue'" })
+      })
+    });
+
+    const requestBody = await req.json();
+    const { queueId, action } = queueUpdateSchema.parse(requestBody);
 
     logStep("Queue update request", { queueId, action });
 
