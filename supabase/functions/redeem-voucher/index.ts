@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // Security Fix: Normalize CORS headers
 const corsHeaders = {
@@ -68,26 +69,18 @@ serve(async (req) => {
       });
     }
 
-    const { barcode } = await req.json();
-    if (!barcode) {
-      return new Response(JSON.stringify({ error: "Barcode required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Input validation with Zod
+    const voucherRedeemSchema = z.object({
+      barcode: z.string()
+        .min(1, { message: "Barcode cannot be empty" })
+        .max(100, { message: "Barcode too long" })
+        .regex(/^VOUCHER-/, { message: "Invalid voucher barcode format" })
+    });
+
+    const requestBody = await req.json();
+    const { barcode } = voucherRedeemSchema.parse(requestBody);
 
     logStep("Processing voucher barcode", { barcode });
-
-    // Validate barcode format
-    if (!barcode.startsWith('VOUCHER-')) {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "Invalid voucher barcode format" 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     // Find the voucher
     const { data: voucher, error: voucherError } = await supabaseClient

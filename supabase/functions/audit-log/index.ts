@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // SECURITY FIX: Restrict CORS to specific origins
 const corsHeaders = {
@@ -58,6 +59,20 @@ serve(async (req) => {
     });
   }
 
+    // Input validation with Zod
+    const auditLogSchema = z.object({
+      event_type: z.string().min(1).max(100, { message: "Event type must be between 1 and 100 characters" }),
+      resource_type: z.string().min(1).max(100, { message: "Resource type must be between 1 and 100 characters" }),
+      resource_id: z.string().max(255).optional(),
+      user_id: z.string().uuid().optional(),
+      staff_id: z.string().uuid().optional(),
+      details: z.record(z.any()).optional(),
+      metadata: z.record(z.any()).optional()
+    });
+
+    const requestBody = await req.json();
+    const validatedData = auditLogSchema.parse(requestBody);
+    
     const {
       event_type,
       resource_type,
@@ -66,14 +81,7 @@ serve(async (req) => {
       staff_id,
       details,
       metadata
-    } = await req.json();
-
-    if (!event_type || !resource_type) {
-      return new Response(JSON.stringify({ error: "event_type and resource_type are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    } = validatedData;
 
     // Create audit log entry
     const auditEntry = {

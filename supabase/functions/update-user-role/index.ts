@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 // Security Fix: Normalize CORS headers
 const corsHeaders = {
@@ -63,20 +64,16 @@ serve(async (req) => {
       });
     }
 
-    const { userId, role } = await req.json();
-    if (!userId || !role) {
-      return new Response(JSON.stringify({ error: "userId and role are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Input validation with Zod
+    const roleUpdateSchema = z.object({
+      userId: z.string().uuid({ message: "Invalid user ID format" }),
+      role: z.enum(['User', 'Staff', 'Admin'], {
+        errorMap: () => ({ message: "Role must be one of: User, Staff, Admin" })
+      })
+    });
 
-    if (!['User', 'Staff', 'Admin'].includes(role)) {
-      return new Response(JSON.stringify({ error: "Invalid role. Must be User, Staff, or Admin" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const requestBody = await req.json();
+    const { userId, role } = roleUpdateSchema.parse(requestBody);
 
     logStep("Processing role update", { userId, role });
 
