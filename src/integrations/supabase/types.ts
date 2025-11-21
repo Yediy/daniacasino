@@ -59,6 +59,83 @@ export type Database = {
         }
         Relationships: []
       }
+      campaign_recipients: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          sent_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          scheduled_for: string | null
+          segment_filter: Json | null
+          sent_at: string | null
+          status: string | null
+          title: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          scheduled_for?: string | null
+          segment_filter?: Json | null
+          sent_at?: string | null
+          status?: string | null
+          title: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          scheduled_for?: string | null
+          segment_filter?: Json | null
+          sent_at?: string | null
+          status?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       cash_game_lists: {
         Row: {
           game: string
@@ -1042,6 +1119,103 @@ export type Database = {
         }
         Relationships: []
       }
+      rewards_catalog: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          min_tier: string | null
+          monetary_value: number | null
+          points_cost: number
+          reward_type: string
+          stock_qty: number | null
+          title: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          min_tier?: string | null
+          monetary_value?: number | null
+          points_cost: number
+          reward_type: string
+          stock_qty?: number | null
+          title: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          min_tier?: string | null
+          monetary_value?: number | null
+          points_cost?: number
+          reward_type?: string
+          stock_qty?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      rewards_redemptions: {
+        Row: {
+          id: string
+          points_spent: number
+          redeemed_at: string
+          reward_id: string
+          status: string | null
+          tournament_entry_id: string | null
+          user_id: string
+          voucher_id: string | null
+        }
+        Insert: {
+          id?: string
+          points_spent: number
+          redeemed_at?: string
+          reward_id: string
+          status?: string | null
+          tournament_entry_id?: string | null
+          user_id: string
+          voucher_id?: string | null
+        }
+        Update: {
+          id?: string
+          points_spent?: number
+          redeemed_at?: string
+          reward_id?: string
+          status?: string | null
+          tournament_entry_id?: string | null
+          user_id?: string
+          voucher_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rewards_redemptions_tournament_entry_id_fkey"
+            columns: ["tournament_entry_id"]
+            isOneToOne: false
+            referencedRelation: "poker_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rewards_redemptions_voucher_id_fkey"
+            columns: ["voucher_id"]
+            isOneToOne: false
+            referencedRelation: "chip_vouchers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seat_holds: {
         Row: {
           created_at: string
@@ -1131,6 +1305,50 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      shifts: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          role: string
+          shift_date: string
+          staff_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          role: string
+          shift_date: string
+          staff_id: string
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          role?: string
+          shift_date?: string
+          staff_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       slot_banks: {
         Row: {
@@ -1281,6 +1499,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      time_entries: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          clock_in: string
+          clock_out: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          shift_id: string | null
+          staff_id: string
+          total_hours: number | null
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in: string
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shift_id?: string | null
+          staff_id: string
+          total_hours?: number | null
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shift_id?: string | null
+          staff_id?: string
+          total_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
