@@ -77,54 +77,56 @@ Deno.serve(async (req) => {
 
     console.log('Seat hold is valid, claiming seat:', hold.seat_no, 'at table:', hold.table_id);
 
-    // Check if the seat is still available in poker_table_players
-    const { data: existingPlayer } = await supabase
-      .from('poker_table_players')
+    // Check if the seat exists and is still reserved
+    const { data: seat, error: seatError } = await supabase
+      .from('poker_seats')
       .select('*')
       .eq('table_id', hold.table_id)
-      .eq('seat', hold.seat_no)
+      .eq('seat_no', hold.seat_no)
       .maybeSingle();
 
-    if (existingPlayer && existingPlayer.user_id !== user.id) {
-      console.error('Seat is already taken by another player');
+    if (seatError) {
+      console.error('Error checking seat:', seatError);
+      throw new Error(`Failed to check seat: ${seatError.message}`);
+    }
+
+    if (!seat || seat.status !== 'reserved' || seat.user_id !== user.id) {
+      console.error('Seat is not reserved for this user');
       return new Response(
         JSON.stringify({ error: 'Seat is no longer available' }),
         { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create or update player seat assignment
-    if (existingPlayer) {
-      // Update existing seat
-      const { error: updateError } = await supabase
-        .from('poker_table_players')
-        .update({
-          user_id: user.id,
-          status: 'active',
-        })
-        .eq('id', existingPlayer.id);
+    // Update seat to occupied
+    const { error: updateError } = await supabase
+      .from('poker_seats')
+      .update({
+        status: 'occupied',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('table_id', hold.table_id)
+      .eq('seat_no', hold.seat_no);
 
-      if (updateError) {
-        console.error('Error updating seat:', updateError);
-        throw new Error(`Failed to update seat: ${updateError.message}`);
-      }
-    } else {
-      // Create new seat assignment
-      const { error: insertError } = await supabase
-        .from('poker_table_players')
-        .insert({
-          id: `${hold.table_id}-${hold.seat_no}`,
-          table_id: hold.table_id,
-          seat: hold.seat_no,
-          user_id: user.id,
-          status: 'active',
-          stack: 0,
-        });
+    if (updateError) {
+      console.error('Error updating seat:', updateError);
+      throw new Error(`Failed to occupy seat: ${updateError.message}`);
+    }
 
-      if (insertError) {
-        console.error('Error creating seat assignment:', insertError);
-        throw new Error(`Failed to claim seat: ${insertError.message}`);
-      }
+    // Also create entry in poker_table_players for backward compatibility
+    const { error: playerInsertError } = await supabase
+      .from('poker_table_players')
+      .upsert({
+        id: `${hold.table_id}-${hold.seat_no}`,
+        table_id: hold.table_id,
+        seat: hold.seat_no,
+        user_id: user.id,
+        status: 'active',
+        stack: 0,
+      }, { onConflict: 'id' });
+
+    if (playerInsertError) {
+      console.warn('Error creating player entry:', playerInsertError);
     }
 
     // Update poker table open seats count

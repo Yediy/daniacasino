@@ -904,6 +904,51 @@ export type Database = {
           },
         ]
       }
+      poker_seats: {
+        Row: {
+          created_at: string | null
+          id: string
+          seat_no: number
+          status: string | null
+          table_id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          seat_no: number
+          status?: string | null
+          table_id: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          seat_no?: number
+          status?: string | null
+          table_id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poker_seats_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poker_seats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       poker_table_players: {
         Row: {
           id: string
@@ -1040,7 +1085,9 @@ export type Database = {
           age_verified: boolean | null
           created_at: string
           dob: string | null
+          email: string | null
           external_player_id: string | null
+          full_name: string | null
           id: string
           kyc_status: string | null
           marketing_opt_in: boolean
@@ -1054,7 +1101,9 @@ export type Database = {
           age_verified?: boolean | null
           created_at?: string
           dob?: string | null
+          email?: string | null
           external_player_id?: string | null
+          full_name?: string | null
           id: string
           kyc_status?: string | null
           marketing_opt_in?: boolean
@@ -1068,7 +1117,9 @@ export type Database = {
           age_verified?: boolean | null
           created_at?: string
           dob?: string | null
+          email?: string | null
           external_player_id?: string | null
+          full_name?: string | null
           id?: string
           kyc_status?: string | null
           marketing_opt_in?: boolean
@@ -1461,6 +1512,21 @@ export type Database = {
         }
         Relationships: []
       }
+      stripe_events: {
+        Row: {
+          id: string
+          processed_at: string | null
+        }
+        Insert: {
+          id: string
+          processed_at?: string | null
+        }
+        Update: {
+          id?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           assigned_to_staff_id: string | null
@@ -1659,6 +1725,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_seat_hold: {
+        Args: { p_queue_id: string; p_seat_no: number; p_table_id: string }
+        Returns: string
+      }
       get_poker_tables_with_seats: {
         Args: never
         Returns: {
@@ -1700,6 +1770,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_poker_queue: { Args: { p_table_id: string }; Returns: string }
       log_sensitive_action: {
         Args: {
           action_type: string
@@ -1713,6 +1784,7 @@ export type Database = {
         Args: { event_data: Json; target_user_id: string }
         Returns: undefined
       }
+      redeem_ticket: { Args: { p_barcode: string }; Returns: Json }
       sanitize_text: { Args: { input_text: string }; Returns: string }
       update_slot_bank_aggregate: {
         Args: { p_bank: string; p_room: string }
