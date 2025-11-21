@@ -29,6 +29,7 @@ import { VoucherRedemption } from "@/pages/VoucherRedemption";
 import { SlotsHeatmap } from "@/pages/SlotsHeatmap";
 import { PokerSeats } from "@/pages/PokerSeats";
 import { StaffOrders } from "@/pages/StaffOrders";
+import Analytics from "@/pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -158,6 +159,11 @@ const App = () => {
     // Check for staff orders
     if (activeTab === "staff-orders") {
       return <StaffOrders />;
+    }
+
+    // Check for analytics
+    if (activeTab === "analytics") {
+      return <Analytics />;
     }
 
     switch (activeTab) {
