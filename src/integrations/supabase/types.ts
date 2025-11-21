@@ -138,13 +138,16 @@ export type Database = {
           created_at: string
           fee: number | null
           id: string
+          notes: string | null
           redeem_window_end: string | null
           redeem_window_start: string | null
           redeemed_at: string | null
           redeemed_by_staff_id: string | null
           status: string | null
           stripe_payment_intent_id: string | null
+          tourney_id: string | null
           user_id: string
+          voucher_type: string
         }
         Insert: {
           amount: number
@@ -153,13 +156,16 @@ export type Database = {
           created_at?: string
           fee?: number | null
           id?: string
+          notes?: string | null
           redeem_window_end?: string | null
           redeem_window_start?: string | null
           redeemed_at?: string | null
           redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
+          tourney_id?: string | null
           user_id: string
+          voucher_type?: string
         }
         Update: {
           amount?: number
@@ -168,13 +174,16 @@ export type Database = {
           created_at?: string
           fee?: number | null
           id?: string
+          notes?: string | null
           redeem_window_end?: string | null
           redeem_window_start?: string | null
           redeemed_at?: string | null
           redeemed_by_staff_id?: string | null
           status?: string | null
           stripe_payment_intent_id?: string | null
+          tourney_id?: string | null
           user_id?: string
+          voucher_type?: string
         }
         Relationships: []
       }
@@ -587,6 +596,7 @@ export type Database = {
         Row: {
           id: string
           menu_item_id: string
+          name_cache: string | null
           notes: string | null
           order_id: string
           qty: number
@@ -594,6 +604,7 @@ export type Database = {
         Insert: {
           id?: string
           menu_item_id: string
+          name_cache?: string | null
           notes?: string | null
           order_id: string
           qty?: number
@@ -601,6 +612,7 @@ export type Database = {
         Update: {
           id?: string
           menu_item_id?: string
+          name_cache?: string | null
           notes?: string | null
           order_id?: string
           qty?: number
@@ -624,6 +636,8 @@ export type Database = {
       }
       orders: {
         Row: {
+          dest_seat: string | null
+          dest_table: string | null
           fee: number | null
           id: string
           picked_up_at: string | null
@@ -641,6 +655,8 @@ export type Database = {
           vendor_id: string
         }
         Insert: {
+          dest_seat?: string | null
+          dest_table?: string | null
           fee?: number | null
           id?: string
           picked_up_at?: string | null
@@ -658,6 +674,8 @@ export type Database = {
           vendor_id: string
         }
         Update: {
+          dest_seat?: string | null
+          dest_table?: string | null
           fee?: number | null
           id?: string
           picked_up_at?: string | null
@@ -945,8 +963,10 @@ export type Database = {
           age_verified: boolean | null
           created_at: string
           dob: string | null
+          external_player_id: string | null
           id: string
           kyc_status: string | null
+          marketing_opt_in: boolean
           name: string | null
           phone: string | null
           points: number | null
@@ -957,8 +977,10 @@ export type Database = {
           age_verified?: boolean | null
           created_at?: string
           dob?: string | null
+          external_player_id?: string | null
           id: string
           kyc_status?: string | null
+          marketing_opt_in?: boolean
           name?: string | null
           phone?: string | null
           points?: number | null
@@ -969,8 +991,10 @@ export type Database = {
           age_verified?: boolean | null
           created_at?: string
           dob?: string | null
+          external_player_id?: string | null
           id?: string
           kyc_status?: string | null
+          marketing_opt_in?: boolean
           name?: string | null
           phone?: string | null
           points?: number | null
@@ -1018,6 +1042,57 @@ export type Database = {
         }
         Relationships: []
       }
+      seat_holds: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          seat_no: number
+          table_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          seat_no: number
+          table_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          seat_no?: number
+          table_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seating_maps: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          id: string
+          image_url: string
+          notes: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url: string
+          notes?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          image_url?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           cash_game_hold_minutes: number | null
@@ -1053,6 +1128,39 @@ export type Database = {
           rg_url?: string | null
           support_phone?: string | null
           terms_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      slot_banks: {
+        Row: {
+          bank: string
+          free_slots: number
+          id: string
+          lat: number | null
+          lng: number | null
+          room: string | null
+          total_slots: number
+          updated_at: string
+        }
+        Insert: {
+          bank: string
+          free_slots?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          room?: string | null
+          total_slots?: number
+          updated_at?: string
+        }
+        Update: {
+          bank?: string
+          free_slots?: number
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          room?: string | null
+          total_slots?: number
           updated_at?: string
         }
         Relationships: []
@@ -1098,6 +1206,39 @@ export type Database = {
           position?: number
           room?: string
           status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff: {
+        Row: {
+          auth_user_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          pin_code: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          pin_code?: string | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          pin_code?: string | null
+          role?: string
           updated_at?: string
         }
         Relationships: []
@@ -1246,6 +1387,20 @@ export type Database = {
         }
         Returns: string
       }
+      get_poker_tables_with_seats: {
+        Args: never
+        Returns: {
+          game: string
+          max_seats: number
+          occupied_seats: number
+          open_seats: number
+          queue_length: number
+          stakes: string
+          status: string
+          table_id: string
+          table_name: string
+        }[]
+      }
       get_public_poker_tables: {
         Args: never
         Returns: {
@@ -1287,6 +1442,10 @@ export type Database = {
         Returns: undefined
       }
       sanitize_text: { Args: { input_text: string }; Returns: string }
+      update_slot_bank_aggregate: {
+        Args: { p_bank: string; p_room: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "User" | "Staff" | "Admin"
