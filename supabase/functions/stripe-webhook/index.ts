@@ -83,7 +83,7 @@ serve(async (req) => {
 
     // Security Fix: Check for duplicate webhook events (idempotency)
     const { data: existingEvent, error: eventCheckError } = await supabaseClient
-      .from('webhook_events')
+      .from('stripe_events')
       .select('id')
       .eq('id', event.id)
       .single();
@@ -100,11 +100,9 @@ serve(async (req) => {
 
     // Record this webhook event to prevent duplicate processing
     const { error: insertEventError } = await supabaseClient
-      .from('webhook_events')
+      .from('stripe_events')
       .insert({
-        id: event.id,
-        event_type: event.type,
-        processed: false
+        id: event.id
       });
 
     if (insertEventError) {
@@ -162,12 +160,6 @@ serve(async (req) => {
         logStep("Unhandled event type", { type: event.type });
     }
 
-    // Mark webhook event as processed
-    await supabaseClient
-      .from('webhook_events')
-      .update({ processed: true })
-      .eq('id', event.id);
-
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -176,14 +168,6 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    
-    // Mark webhook event as failed (keep processed: false for potential retry)
-    if (event?.id) {
-      await supabaseClient
-        .from('webhook_events')
-        .update({ processed: false })
-        .eq('id', event.id);
-    }
     
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
