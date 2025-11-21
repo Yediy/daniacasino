@@ -148,6 +148,41 @@ serve(async (req) => {
       });
     }
 
+    // Auto-create tournament entry if this is a tournament voucher
+    let tournamentEntryId = null;
+    if (voucher.voucher_type === 'TOURNAMENT_ENTRY' && voucher.tourney_id) {
+      logStep("Auto-creating tournament entry", { tourneyId: voucher.tourney_id });
+      
+      const { data: entryData, error: entryError } = await supabaseClient
+        .from('poker_entries')
+        .insert({
+          user_id: voucher.user_id,
+          tourney_id: voucher.tourney_id,
+          amount: 0, // Voucher entries are free
+          status: 'paid',
+          issued_at: redeemTime
+        })
+        .select('id')
+        .single();
+
+      if (entryError) {
+        logStep("Warning: Failed to create tournament entry", { error: entryError });
+      } else {
+        tournamentEntryId = entryData.id;
+        logStep("Tournament entry created", { entryId: tournamentEntryId });
+        
+        // Notify user about tournament registration
+        await supabaseClient.rpc('create_notification', {
+          target_user_id: voucher.user_id,
+          notification_type: 'tournament_registered',
+          notification_title: 'Tournament Entry Created',
+          notification_message: 'Your tournament voucher has been redeemed and you are now registered for the tournament.',
+          ref_id: tournamentEntryId,
+          ref_type: 'poker_entry'
+        });
+      }
+    }
+
     // Log audit event
     await supabaseClient
       .from('audit_logs')
