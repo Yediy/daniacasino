@@ -25,6 +25,10 @@ import { Entertainment } from "@/pages/Entertainment";
 import { Visit } from "@/pages/Visit";
 import { JaiAlai } from "@/pages/JaiAlai";
 import { WalletPage } from "@/pages/Wallet";
+import { VoucherRedemption } from "@/pages/VoucherRedemption";
+import { SlotsHeatmap } from "@/pages/SlotsHeatmap";
+import { PokerSeats } from "@/pages/PokerSeats";
+import { StaffOrders } from "@/pages/StaffOrders";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +138,26 @@ const App = () => {
     // Check for enhanced dining access
     if (activeTab === "dining-enhanced") {
       return <DiningEnhanced />;
+    }
+
+    // Check for voucher redemption (staff)
+    if (activeTab === "voucher-redemption") {
+      return <VoucherRedemption />;
+    }
+
+    // Check for slots heatmap
+    if (activeTab === "slots-heatmap") {
+      return <SlotsHeatmap />;
+    }
+
+    // Check for poker seats
+    if (activeTab === "poker-seats") {
+      return <PokerSeats />;
+    }
+
+    // Check for staff orders
+    if (activeTab === "staff-orders") {
+      return <StaffOrders />;
     }
 
     switch (activeTab) {
