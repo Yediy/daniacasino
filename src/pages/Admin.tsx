@@ -17,6 +17,8 @@ import {
   LogOut,
   AlertTriangle
 } from "lucide-react";
+import { StaffManagement } from "@/components/StaffManagement";
+import { AuditLogsViewer } from "@/components/AuditLogsViewer";
 
 interface UserProfile {
   id: string;
@@ -290,10 +292,11 @@ export const Admin = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="audit">Audit Logs</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -351,6 +354,14 @@ export const Admin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="staff">
+            <StaffManagement />
+          </TabsContent>
+
+          <TabsContent value="audit">
+            <AuditLogsViewer />
           </TabsContent>
 
           <TabsContent value="transactions">
