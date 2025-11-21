@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/hooks/use-notifications";
 import { UtensilsCrossed, Clock, CheckCircle, Package, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,7 @@ export const StaffOrders = () => {
   const [selectedVendor, setSelectedVendor] = useState<string>("all");
   const [vendors, setVendors] = useState<Array<{id: string, name: string}>>([]);
   const { toast } = useToast();
+  const { showNotification } = useNotifications();
 
   useEffect(() => {
     checkStaffAccess();
@@ -50,11 +52,38 @@ export const StaffOrders = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'orders'
         },
-        () => {
+        (payload) => {
+          console.log('New order:', payload);
+          const vendor = vendors.find(v => v.id === (payload.new as any).vendor_id);
+          showNotification({
+            title: "New Order",
+            message: `New order placed at ${vendor?.name || 'vendor'}`,
+            type: "order_new",
+          });
+          fetchOrders();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders'
+        },
+        (payload) => {
+          const order = payload.new as any;
+          if (order.status === 'ready') {
+            showNotification({
+              title: "Order Ready",
+              message: `Order ${order.pickup_code || 'unknown'} is ready for pickup`,
+              type: "order_ready",
+              referenceId: order.id,
+            });
+          }
           fetchOrders();
         }
       )

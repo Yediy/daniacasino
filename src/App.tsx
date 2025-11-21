@@ -30,6 +30,10 @@ import { SlotsHeatmap } from "@/pages/SlotsHeatmap";
 import { PokerSeats } from "@/pages/PokerSeats";
 import { StaffOrders } from "@/pages/StaffOrders";
 import Analytics from "@/pages/Analytics";
+import Reports from "@/pages/Reports";
+import PlayerDashboard from "@/pages/PlayerDashboard";
+import TournamentManagement from "@/pages/TournamentManagement";
+import TableManagement from "@/pages/TableManagement";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +168,27 @@ const App = () => {
     // Check for analytics
     if (activeTab === "analytics") {
       return <Analytics />;
+    }
+
+    // Check for reports
+    if (activeTab === "reports") {
+      return <Reports />;
+    }
+
+    // Check for player dashboard
+    if (activeTab === "player-dashboard") {
+      if (!user) return <Auth />;
+      return <PlayerDashboard />;
+    }
+
+    // Check for tournament management
+    if (activeTab === "tournament-management") {
+      return <TournamentManagement />;
+    }
+
+    // Check for table management
+    if (activeTab === "table-management") {
+      return <TableManagement />;
     }
 
     switch (activeTab) {
