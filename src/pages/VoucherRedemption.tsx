@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Scan, CheckCircle, XCircle, Ticket, Trophy, UtensilsCrossed, Gift } from "lucide-react";
+import { QrScanner } from "@/components/QrScanner";
 
 interface RedemptionResult {
   success: boolean;
@@ -22,6 +24,7 @@ export const VoucherRedemption = () => {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<RedemptionResult | null>(null);
+  const [scannerEnabled, setScannerEnabled] = useState(false);
   const { toast } = useToast();
 
   const getVoucherIcon = (type: string) => {
@@ -89,6 +92,15 @@ export const VoucherRedemption = () => {
     }
   };
 
+  const handleScan = (data: string) => {
+    setBarcode(data);
+    setScannerEnabled(false);
+    // Auto-redeem after scan
+    setTimeout(() => {
+      handleRedeem();
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
       <div className="max-w-2xl mx-auto px-4 space-y-6">
@@ -102,53 +114,75 @@ export const VoucherRedemption = () => {
           </p>
         </div>
 
-        <Card className="shadow-elegant border-2">
-          <CardHeader>
-            <CardTitle>Scan Barcode</CardTitle>
-            <CardDescription>
-              Enter the voucher barcode or use a barcode scanner
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="VOUCHER-XXXX-XXXX-XXXX"
-                value={barcode}
-                onChange={(e) => setBarcode(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="font-mono text-lg"
-                autoFocus
-              />
-              <Button 
-                onClick={handleRedeem} 
-                disabled={loading || !barcode.trim()}
-                size="lg"
-              >
-                {loading ? "Processing..." : "Redeem"}
-              </Button>
-            </div>
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            <TabsTrigger value="camera">Camera Scanner</TabsTrigger>
+          </TabsList>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-4 border-t">
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <Ticket className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <div className="text-xs text-muted-foreground">Chip Vouchers</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <Trophy className="h-6 w-6 mx-auto mb-2 text-casino-gold" />
-                <div className="text-xs text-muted-foreground">Tournament Entry</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <UtensilsCrossed className="h-6 w-6 mx-auto mb-2 text-casino-emerald" />
-                <div className="text-xs text-muted-foreground">Food Vouchers</div>
-              </div>
-              <div className="text-center p-3 bg-muted rounded-lg">
-                <Gift className="h-6 w-6 mx-auto mb-2 text-casino-ruby" />
-                <div className="text-xs text-muted-foreground">Promotions</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <TabsContent value="manual">
+            <Card className="shadow-elegant border-2">
+              <CardHeader>
+                <CardTitle>Enter Barcode</CardTitle>
+                <CardDescription>
+                  Type the voucher barcode or use a barcode scanner
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    placeholder="VOUCHER-XXXX-XXXX-XXXX"
+                    value={barcode}
+                    onChange={(e) => setBarcode(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="font-mono text-lg"
+                    autoFocus
+                  />
+                  <Button 
+                    onClick={handleRedeem} 
+                    disabled={loading || !barcode.trim()}
+                    size="lg"
+                  >
+                    {loading ? "Processing..." : "Redeem"}
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 pt-4 border-t">
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <Ticket className="h-6 w-6 mx-auto mb-2 text-primary" />
+                    <div className="text-xs text-muted-foreground">Chip Vouchers</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <Trophy className="h-6 w-6 mx-auto mb-2 text-warning" />
+                    <div className="text-xs text-muted-foreground">Tournament Entry</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <UtensilsCrossed className="h-6 w-6 mx-auto mb-2 text-success" />
+                    <div className="text-xs text-muted-foreground">Food Vouchers</div>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <Gift className="h-6 w-6 mx-auto mb-2 text-destructive" />
+                    <div className="text-xs text-muted-foreground">Promotions</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="camera">
+            <QrScanner 
+              onScan={handleScan}
+              onError={(error) => {
+                toast({
+                  title: "Scanner Error",
+                  description: error,
+                  variant: "destructive",
+                });
+              }}
+            />
+          </TabsContent>
+        </Tabs>
 
         {lastResult && (
           <Card className={lastResult.success ? "border-success shadow-elegant" : "border-destructive"}>
