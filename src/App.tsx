@@ -12,6 +12,7 @@ import { Tickets } from "@/pages/Tickets";
 import { SlotsLive } from "@/pages/SlotsLive";
 import { Header } from "@/components/Header";
 import { Navigation, NavigationTab } from "@/components/Navigation";
+import { MobileNavigation } from "@/components/MobileNavigation";
 import { Home } from "@/pages/Home";
 import { Poker } from "@/pages/Poker";
 import { Gaming } from "@/pages/Gaming";
@@ -244,10 +245,15 @@ const App = () => {
         <Sonner />
         <div className="min-h-screen bg-background">
           <Header user={user} />
-          <main>
+          <main className="pb-20">
             {renderTabContent()}
           </main>
-          <Navigation activeTab={activeTab} onTabChange={setActiveTab} user={user} />
+          <div className="block md:hidden">
+            <MobileNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+          </div>
+          <div className="hidden md:block">
+            <Navigation activeTab={activeTab} onTabChange={setActiveTab} user={user} />
+          </div>
         </div>
       </TooltipProvider>
     </QueryClientProvider>

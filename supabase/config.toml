@@ -40,6 +40,9 @@ verify_jwt = true
 [functions.claim-seat-from-hold]
 verify_jwt = true
 
+[functions.send-sms]
+verify_jwt = true
+
 [db]
 port = 54322
 shadow_port = 54320
