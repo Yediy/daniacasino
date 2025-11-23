@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/use-notifications";
 import { UtensilsCrossed, Clock, CheckCircle, Package, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StaffNotificationCenter } from "@/components/StaffNotificationCenter";
 
 interface Order {
   id: string;
@@ -339,6 +340,7 @@ export const StaffOrders = () => {
               Manage kitchen orders and deliveries in real-time
             </p>
           </div>
+          <StaffNotificationCenter />
         </div>
 
         {/* Vendor Filter */}

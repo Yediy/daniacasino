@@ -1,7 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, Clock, Users, AlertCircle } from "lucide-react";
+import { TournamentSchedule } from "@/components/TournamentSchedule";
 
 export const Poker = () => {
   const pokerSchedule = [
@@ -18,7 +20,7 @@ export const Poker = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
-      <div className="max-w-md mx-auto px-4 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-casino-charcoal">
@@ -28,6 +30,14 @@ export const Poker = () => {
             Live action tables and tournaments
           </p>
         </div>
+
+        <Tabs defaultValue="schedule" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="schedule">Room Schedule</TabsTrigger>
+            <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="schedule" className="space-y-6">{/* ... keep existing code */}
 
         {/* Age Requirements */}
         <div className="bg-accent/50 p-4 rounded-lg border border-primary/20">
@@ -134,6 +144,12 @@ export const Poker = () => {
             </div>
           </div>
         </div>
+          </TabsContent>
+
+          <TabsContent value="tournaments">
+            <TournamentSchedule />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
