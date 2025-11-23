@@ -51,24 +51,50 @@ export const VoucherRedemption = () => {
     setLastResult(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('redeem-voucher', {
-        body: { barcode: barcode.trim() }
+      // Get current staff user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('You must be logged in to redeem vouchers');
+      }
+
+      // Use the new redeem_chip_voucher database function
+      const { data, error } = await supabase.rpc('redeem_chip_voucher', {
+        p_barcode: barcode.trim(),
+        p_staff_id: user.id
       });
 
       if (error) throw error;
 
-      setLastResult(data);
+      const result = data as {
+        success: boolean;
+        amount?: number;
+        voucher_type?: string;
+        voucher_id?: string;
+        user_id?: string;
+        error?: string;
+      };
 
-      if (data.success) {
+      setLastResult({
+        success: result.success,
+        error: result.error,
+        voucher: result.success ? {
+          id: result.voucher_id || '',
+          amount: result.amount || 0,
+          redeemed_at: new Date().toISOString(),
+          chip_value: (result.amount || 0) / 100,
+        } : undefined
+      });
+
+      if (result.success) {
         toast({
           title: "✅ Voucher Redeemed",
-          description: `Successfully redeemed $${(data.voucher.amount / 100).toFixed(2)} voucher`,
+          description: `Successfully redeemed $${((result.amount || 0) / 100).toFixed(2)} ${result.voucher_type} voucher`,
         });
         setBarcode("");
       } else {
         toast({
           title: "Redemption Failed",
-          description: data.error || "Unable to redeem voucher",
+          description: result.error || "Unable to redeem voucher",
           variant: "destructive",
         });
       }
