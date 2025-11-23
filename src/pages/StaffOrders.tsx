@@ -161,12 +161,23 @@ export const StaffOrders = () => {
 
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+      // Get current user for staff tracking
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Use the new process_order function
+      const { data, error } = await supabase.rpc('process_order', {
+        p_order_id: orderId,
+        p_new_status: newStatus,
+        p_staff_id: user?.id || null
+      });
 
       if (error) throw error;
+
+      const result = data as { success: boolean; error?: string };
+
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to update order');
+      }
 
       toast({
         title: "Order Updated",
@@ -178,7 +189,7 @@ export const StaffOrders = () => {
       console.error('Error updating order:', error);
       toast({
         title: "Error",
-        description: "Failed to update order status",
+        description: error instanceof Error ? error.message : "Failed to update order status",
         variant: "destructive",
       });
     }

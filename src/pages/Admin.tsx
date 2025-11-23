@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { StaffManagement } from "@/components/StaffManagement";
 import { AuditLogsViewer } from "@/components/AuditLogsViewer";
+import { EventManagement } from "@/components/EventManagement";
+import { VendorManagement } from "@/components/VendorManagement";
 
 interface UserProfile {
   id: string;
@@ -292,11 +294,12 @@ export const Admin = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="staff">Staff</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="audit">Audit Logs</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -358,6 +361,14 @@ export const Admin = () => {
 
           <TabsContent value="staff">
             <StaffManagement />
+          </TabsContent>
+
+          <TabsContent value="events">
+            <EventManagement />
+          </TabsContent>
+
+          <TabsContent value="vendors">
+            <VendorManagement />
           </TabsContent>
 
           <TabsContent value="audit">
