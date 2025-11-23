@@ -21,6 +21,7 @@ import { StaffManagement } from "@/components/StaffManagement";
 import { AuditLogsViewer } from "@/components/AuditLogsViewer";
 import { EventManagement } from "@/components/EventManagement";
 import { VendorManagement } from "@/components/VendorManagement";
+import { MenuItemManagement } from "@/components/MenuItemManagement";
 
 interface UserProfile {
   id: string;
@@ -299,8 +300,8 @@ export const Admin = () => {
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
+            <TabsTrigger value="menu">Menu Items</TabsTrigger>
             <TabsTrigger value="audit">Audit Logs</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
@@ -369,6 +370,10 @@ export const Admin = () => {
 
           <TabsContent value="vendors">
             <VendorManagement />
+          </TabsContent>
+
+          <TabsContent value="menu">
+            <MenuItemManagement />
           </TabsContent>
 
           <TabsContent value="audit">
