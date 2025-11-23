@@ -1725,6 +1725,15 @@ export type Database = {
         }
         Returns: string
       }
+      create_poker_seat_hold: {
+        Args: {
+          p_hold_duration_minutes?: number
+          p_seat_no: number
+          p_table_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_seat_hold: {
         Args: { p_queue_id: string; p_seat_no: number; p_table_id: string }
         Returns: string
@@ -1784,7 +1793,16 @@ export type Database = {
         Args: { event_data: Json; target_user_id: string }
         Returns: undefined
       }
+      process_order: {
+        Args: { p_new_status: string; p_order_id: string; p_staff_id?: string }
+        Returns: Json
+      }
+      redeem_chip_voucher: {
+        Args: { p_barcode: string; p_staff_id: string }
+        Returns: Json
+      }
       redeem_ticket: { Args: { p_barcode: string }; Returns: Json }
+      release_expired_seat_holds: { Args: never; Returns: number }
       sanitize_text: { Args: { input_text: string }; Returns: string }
       update_slot_bank_aggregate: {
         Args: { p_bank: string; p_room: string }
