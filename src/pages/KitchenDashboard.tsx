@@ -5,8 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Volume2, VolumeX, MapPin, RefreshCw, Clock } from "lucide-react";
+import { Volume2, VolumeX, MapPin, RefreshCw, Clock, ChefHat } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSMSNotifications } from "@/hooks/use-sms-notifications";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { DroppableColumn } from "@/components/DroppableColumn";
 
 interface Order {
   id: string;
@@ -18,6 +22,7 @@ interface Order {
   dest_table?: string;
   dest_seat?: string;
   vendor_id: string;
+  user_id: string;
 }
 
 interface OrderItem {
@@ -52,7 +57,9 @@ export const KitchenDashboard = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [filter, setFilter] = useState<'active' | 'ready' | 'all'>('active');
+  const [activeId, setActiveId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { sendOrderReadyNotification } = useSMSNotifications();
 
   useEffect(() => {
     fetchVendors();
@@ -211,6 +218,8 @@ export const KitchenDashboard = () => {
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
+      const order = orders.find(o => o.id === orderId);
+      
       const { error } = await supabase
         .from('orders')
         .update({ status })
@@ -220,6 +229,19 @@ export const KitchenDashboard = () => {
 
       if (status === 'ready' && soundEnabled) {
         playNotificationSound();
+        
+        // Send SMS notification if order is ready and has user phone
+        if (order) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', order.user_id)
+            .single();
+            
+          if (profile?.phone) {
+            await sendOrderReadyNotification(profile.phone, order.pickup_code, order.user_id);
+          }
+        }
       }
 
       toast({
@@ -227,7 +249,7 @@ export const KitchenDashboard = () => {
         description: `Order status changed to ${status}`,
       });
 
-      fetchOrders(); // Refresh orders
+      fetchOrders();
     } catch (error) {
       console.error('Error updating order:', error);
       toast({
@@ -236,6 +258,28 @@ export const KitchenDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) {
+      setActiveId(null);
+      return;
+    }
+
+    const orderId = active.id as string;
+    const newStatus = over.id as string;
+
+    if (newStatus === 'placed' || newStatus === 'prepping' || newStatus === 'ready') {
+      updateOrderStatus(orderId, newStatus);
+    }
+
+    setActiveId(null);
   };
 
   const playNotificationSound = () => {
@@ -361,47 +405,52 @@ export const KitchenDashboard = () => {
 
         <Tabs value={showHeatmap ? "heatmap" : "kitchen"} className="w-full">
           <TabsContent value="kitchen" className="space-y-6">
-            {/* Orders Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Placed Orders */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Placed</h3>
-                {getOrdersByStatus('placed').map(order => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    items={orderItems[order.id] || []}
-                    onUpdateStatus={updateOrderStatus}
-                  />
-                ))}
+            <DndContext
+              collisionDetection={closestCorners}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              {/* Orders Board with Drag and Drop */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Placed Column */}
+                <DroppableColumn
+                  id="placed"
+                  title="🔵 Placed"
+                  orders={getOrdersByStatus('placed')}
+                  orderItems={orderItems}
+                  onUpdateStatus={updateOrderStatus}
+                />
+
+                {/* Prepping Column */}
+                <DroppableColumn
+                  id="prepping"
+                  title="🟡 Prepping"
+                  orders={getOrdersByStatus('prepping')}
+                  orderItems={orderItems}
+                  onUpdateStatus={updateOrderStatus}
+                />
+
+                {/* Ready Column */}
+                <DroppableColumn
+                  id="ready"
+                  title="🟢 Ready for Pickup"
+                  orders={getOrdersByStatus('ready')}
+                  orderItems={orderItems}
+                  onUpdateStatus={updateOrderStatus}
+                />
               </div>
 
-              {/* Prepping Orders */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Prepping</h3>
-                {getOrdersByStatus('prepping').map(order => (
+              <DragOverlay>
+                {activeId ? (
                   <OrderCard
-                    key={order.id}
-                    order={order}
-                    items={orderItems[order.id] || []}
+                    order={orders.find(o => o.id === activeId)!}
+                    items={orderItems[activeId] || []}
                     onUpdateStatus={updateOrderStatus}
+                    isDragging
                   />
-                ))}
-              </div>
-
-              {/* Ready Orders */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Ready for Pickup</h3>
-                {getOrdersByStatus('ready').map(order => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    items={orderItems[order.id] || []}
-                    onUpdateStatus={updateOrderStatus}
-                  />
-                ))}
-              </div>
-            </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
           </TabsContent>
 
           <TabsContent value="heatmap" className="space-y-6">
@@ -428,9 +477,10 @@ interface OrderCardProps {
   order: Order;
   items: OrderItem[];
   onUpdateStatus: (orderId: string, status: string) => void;
+  isDragging?: boolean;
 }
 
-const OrderCard = ({ order, items, onUpdateStatus }: OrderCardProps) => {
+const OrderCard = ({ order, items, onUpdateStatus, isDragging = false }: OrderCardProps) => {
   const getAvailableActions = () => {
     switch (order.status) {
       case 'placed':

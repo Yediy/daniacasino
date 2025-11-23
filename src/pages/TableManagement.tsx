@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/use-notifications";
-import { Spade, Users, UserPlus, UserMinus, ArrowRight } from "lucide-react";
+import { useSMSNotifications } from "@/hooks/use-sms-notifications";
+import { Spade, Users, UserPlus, UserMinus, ArrowRight, Phone } from "lucide-react";
 
 interface PokerTable {
   id: string;
@@ -35,6 +36,7 @@ export default function TableManagement() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { showNotification } = useNotifications();
+  const { sendSeatAvailableNotification } = useSMSNotifications();
 
   useEffect(() => {
     fetchTables();
@@ -119,13 +121,20 @@ export default function TableManagement() {
         .insert({
           table_id: selectedTable.id,
           user_id: nextPlayer.user_id,
-          seat_no: 1, // Would need logic to determine available seat
-          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15 min expiry
+          seat_no: 1,
+          expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
         });
 
       if (holdError) throw holdError;
 
-      // Notify player
+      // Get player phone for SMS
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('phone')
+        .eq('id', nextPlayer.user_id)
+        .single();
+
+      // Send in-app notification
       showNotification({
         title: "Seat Available",
         message: `Your seat at ${selectedTable.name} is ready!`,
@@ -133,9 +142,18 @@ export default function TableManagement() {
         referenceId: selectedTable.id,
       });
 
+      // Send SMS if phone is available
+      if (profile?.phone) {
+        await sendSeatAvailableNotification(
+          profile.phone,
+          selectedTable.name,
+          nextPlayer.user_id
+        );
+      }
+
       toast({
         title: "Player Called",
-        description: `Player has been notified`,
+        description: `Player has been notified via app${profile?.phone ? ' and SMS' : ''}`,
       });
 
       fetchQueue(selectedTable.id);
