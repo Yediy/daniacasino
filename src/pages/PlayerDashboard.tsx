@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Ticket, DollarSign, Gift, Star, TrendingUp, Calendar, Clock } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import LoyaltyProgression from "@/components/LoyaltyProgression";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface Profile {
   id: string;
@@ -30,10 +32,19 @@ export default function PlayerDashboard() {
   const [pointsHistory, setPointsHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { permission, requestPermission, subscribeToNotifications } = useNotifications();
 
   useEffect(() => {
     fetchPlayerData();
+    initNotifications();
   }, []);
+
+  const initNotifications = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      subscribeToNotifications(user.id);
+    }
+  };
 
   const fetchPlayerData = async () => {
     try {
@@ -188,18 +199,27 @@ export default function PlayerDashboard() {
     <div className="min-h-screen bg-gradient-subtle pb-20 pt-4">
       <div className="max-w-7xl mx-auto px-4 space-y-6">
         {/* Welcome Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground">
-            Welcome back, {profile.name || 'Player'}!
-          </h1>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge className={getTierColor(profile.tier)}>
-              {profile.tier || 'User'}
-            </Badge>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">{profile.points || 0} Points</span>
+        <div className="mb-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Welcome back, {profile.name || 'Player'}!
+            </h1>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge className={getTierColor(profile.tier)}>
+                {profile.tier || 'User'}
+              </Badge>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">{profile.points || 0} Points</span>
+            </div>
           </div>
+          {permission !== "granted" && (
+            <Button onClick={requestPermission} variant="outline">
+              Enable Notifications
+            </Button>
+          )}
         </div>
+
+        <LoyaltyProgression />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

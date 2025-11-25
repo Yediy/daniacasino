@@ -3,7 +3,7 @@ import { Home, Spade, Gamepad2, Utensils, Calendar, MapPin, Wallet, Shield, Zap 
 import { cn } from "@/lib/utils";
 import { User } from "@supabase/supabase-js";
 
-export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "jai-alai" | "visit" | "wallet" | "admin" | "tickets" | "slots" | "gaming-live" | "poker-live" | "kitchen" | "staff-heatmap" | "dining-enhanced" | "voucher-redemption" | "slots-heatmap" | "poker-seats" | "staff-orders" | "analytics" | "reports" | "player-dashboard" | "tournament-management" | "table-management" | "rewards";
+export type NavigationTab = "home" | "poker" | "gaming" | "dining" | "entertainment" | "jai-alai" | "visit" | "wallet" | "admin" | "tickets" | "slots" | "gaming-live" | "poker-live" | "kitchen" | "staff-heatmap" | "dining-enhanced" | "voucher-redemption" | "slots-heatmap" | "poker-seats" | "staff-orders" | "analytics" | "reports" | "player-dashboard" | "tournament-management" | "table-management" | "rewards" | "support";
 
 interface NavigationProps {
   activeTab: NavigationTab;

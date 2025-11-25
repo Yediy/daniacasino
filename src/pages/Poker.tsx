@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, Clock, Users, AlertCircle } from "lucide-react";
 import { TournamentSchedule } from "@/components/TournamentSchedule";
+import TournamentBracket from "@/components/TournamentBracket";
 
 export const Poker = () => {
+  const [selectedTourneyId, setSelectedTourneyId] = useState<string | null>(null);
   const pokerSchedule = [
     { day: "Monday", open: "11:00 AM", close: "3:00 AM", tournaments: "7:00 PM - No Limit Hold'em" },
     { day: "Tuesday", open: "11:00 AM", close: "3:00 AM", tournaments: "7:00 PM - Omaha Hi-Lo" },
@@ -32,9 +35,10 @@ export const Poker = () => {
         </div>
 
         <Tabs defaultValue="schedule" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="schedule">Room Schedule</TabsTrigger>
             <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
+            <TabsTrigger value="bracket">Bracket</TabsTrigger>
           </TabsList>
 
           <TabsContent value="schedule" className="space-y-6">{/* ... keep existing code */}
@@ -147,7 +151,19 @@ export const Poker = () => {
           </TabsContent>
 
           <TabsContent value="tournaments">
-            <TournamentSchedule />
+            <TournamentSchedule onSelectTournament={setSelectedTourneyId} />
+          </TabsContent>
+
+          <TabsContent value="bracket">
+            {selectedTourneyId ? (
+              <TournamentBracket tourneyId={selectedTourneyId} />
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center text-muted-foreground">
+                  <p>Select a tournament from the Tournaments tab to view its bracket</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
