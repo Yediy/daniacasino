@@ -378,11 +378,31 @@ export const Admin = () => {
             <MenuItemManagement />
           </TabsContent>
 
-          <TabsContent value="campaigns">
-            <CampaignBuilder />
-          </TabsContent>
+        <TabsContent value="campaigns">
+          <CampaignBuilder />
+        </TabsContent>
 
-          <TabsContent value="audit">
+        <TabsContent value="analytics">
+          <div className="mb-4">
+            <Button onClick={() => window.open('/analytics', '_blank')}>
+              Open Full Analytics Dashboard
+            </Button>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Analytics Preview</CardTitle>
+              <CardDescription>Open full dashboard for detailed insights</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Click the button above to view comprehensive analytics including activity heatmaps,
+                revenue trends, and player behavior patterns.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="audit">
             <AuditLogsViewer />
           </TabsContent>
 

@@ -779,6 +779,77 @@ export type Database = {
           },
         ]
       }
+      player_achievements: {
+        Row: {
+          achievement_description: string | null
+          achievement_name: string
+          achievement_type: string
+          earned_at: string
+          icon: string | null
+          id: string
+          metadata: Json | null
+          points_awarded: number | null
+          user_id: string
+        }
+        Insert: {
+          achievement_description?: string | null
+          achievement_name: string
+          achievement_type: string
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          metadata?: Json | null
+          points_awarded?: number | null
+          user_id: string
+        }
+        Update: {
+          achievement_description?: string | null
+          achievement_name?: string
+          achievement_type?: string
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          metadata?: Json | null
+          points_awarded?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      player_activity_log: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          location: string | null
+          user_id: string | null
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          location?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       player_preferences: {
         Row: {
           auto_rebuy: boolean | null
@@ -1527,6 +1598,44 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          sender_id: string
+          sender_type: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          sender_id: string
+          sender_type: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          sender_id?: string
+          sender_type?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to_staff_id: string | null
@@ -1563,6 +1672,39 @@ export type Database = {
           subject?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      tier_benefits: {
+        Row: {
+          benefit_description: string | null
+          benefit_name: string
+          benefit_type: string
+          benefit_value: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          tier: string
+        }
+        Insert: {
+          benefit_description?: string | null
+          benefit_name: string
+          benefit_type: string
+          benefit_value?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          tier: string
+        }
+        Update: {
+          benefit_description?: string | null
+          benefit_name?: string
+          benefit_type?: string
+          benefit_value?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          tier?: string
         }
         Relationships: []
       }
@@ -1616,6 +1758,131 @@ export type Database = {
             columns: ["staff_id"]
             isOneToOne: false
             referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_brackets: {
+        Row: {
+          created_at: string
+          id: string
+          match_number: number
+          player1_chips: number | null
+          player1_id: string | null
+          player2_chips: number | null
+          player2_id: string | null
+          round_number: number
+          status: string | null
+          tourney_id: string
+          updated_at: string
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_number: number
+          player1_chips?: number | null
+          player1_id?: string | null
+          player2_chips?: number | null
+          player2_id?: string | null
+          round_number: number
+          status?: string | null
+          tourney_id: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_number?: number
+          player1_chips?: number | null
+          player1_id?: string | null
+          player2_chips?: number | null
+          player2_id?: string | null
+          round_number?: number
+          status?: string | null
+          tourney_id?: string
+          updated_at?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_brackets_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_standings: {
+        Row: {
+          created_at: string
+          eliminated_at: string | null
+          final_chips: number | null
+          id: string
+          prize_amount: number | null
+          rank: number
+          tourney_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          eliminated_at?: string | null
+          final_chips?: number | null
+          id?: string
+          prize_amount?: number | null
+          rank: number
+          tourney_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          eliminated_at?: string | null
+          final_chips?: number | null
+          id?: string
+          prize_amount?: number | null
+          rank?: number
+          tourney_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_standings_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_standings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

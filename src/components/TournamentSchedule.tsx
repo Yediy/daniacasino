@@ -29,7 +29,7 @@ interface UserEntry {
   status: string | null;
 }
 
-export const TournamentSchedule = () => {
+export const TournamentSchedule = ({ onSelectTournament }: { onSelectTournament?: (tourneyId: string) => void }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [userEntries, setUserEntries] = useState<UserEntry[]>([]);
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
@@ -184,9 +184,20 @@ export const TournamentSchedule = () => {
                           )}
                         </CardDescription>
                       </div>
-                      <Badge variant={isFull ? 'secondary' : 'default'} className="ml-4">
-                        {isFull ? 'Full' : `${tournament.seats_left} seats left`}
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Badge variant={isFull ? 'secondary' : 'default'}>
+                          {isFull ? 'Full' : `${tournament.seats_left} seats left`}
+                        </Badge>
+                        {onSelectTournament && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onSelectTournament(tournament.id)}
+                          >
+                            View Bracket
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>

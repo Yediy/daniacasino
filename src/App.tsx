@@ -36,6 +36,7 @@ import PlayerDashboard from "@/pages/PlayerDashboard";
 import TournamentManagement from "@/pages/TournamentManagement";
 import TableManagement from "@/pages/TableManagement";
 import { RewardsShop } from "@/pages/RewardsShop";
+import Support from "@/pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -197,6 +198,11 @@ const App = () => {
     if (activeTab === "rewards") {
       if (!user) return <Auth />;
       return <RewardsShop />;
+    }
+
+    // Check for support
+    if (activeTab === "support") {
+      return <Support />;
     }
 
     switch (activeTab) {
