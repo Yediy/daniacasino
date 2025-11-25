@@ -142,6 +142,11 @@ const App = () => {
     if (activeTab === "staff-heatmap") {
       return <StaffHeatmap />;
     }
+    
+    // Check for tournament management
+    if (activeTab === "tournament-management") {
+      return <TournamentManagement />;
+    }
 
     // Check for enhanced dining access
     if (activeTab === "dining-enhanced") {
@@ -182,11 +187,6 @@ const App = () => {
     if (activeTab === "player-dashboard") {
       if (!user) return <Auth />;
       return <PlayerDashboard />;
-    }
-
-    // Check for tournament management
-    if (activeTab === "tournament-management") {
-      return <TournamentManagement />;
     }
 
     // Check for table management

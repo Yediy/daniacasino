@@ -148,6 +148,33 @@ Deno.serve(async (req) => {
 
     console.log('Order completed successfully:', order.id);
 
+    // Get user phone for SMS
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('phone')
+      .eq('id', user.id)
+      .single();
+
+    // Send SMS notification if user has phone
+    if (profile?.phone) {
+      await supabase.functions.invoke('send-sms', {
+        body: {
+          to: profile.phone,
+          message: `Your order has been placed and will be ready in approximately ${prep_minutes} minutes. Pickup code: ${order.pickup_code}`,
+          type: 'order_ready',
+          userId: user.id
+        }
+      });
+    }
+
+    // Log player activity
+    await supabase.from('player_activity_log').insert({
+      user_id: user.id,
+      activity_type: 'order_placed',
+      location: validatedData.vendor_id,
+      activity_data: { order_id: order.id, total_cents: total_cents }
+    });
+
     // Create notification for user
     await supabase.rpc('create_notification', {
       target_user_id: user.id,

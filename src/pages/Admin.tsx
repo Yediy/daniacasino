@@ -297,12 +297,14 @@ export const Admin = () => {
 
         {/* Admin Tabs */}
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="staff">Staff</TabsTrigger>
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="menu">Menu Items</TabsTrigger>
+            <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
+            <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
             <TabsTrigger value="audit">Audit Logs</TabsTrigger>
           </TabsList>
 
@@ -378,29 +380,54 @@ export const Admin = () => {
             <MenuItemManagement />
           </TabsContent>
 
-        <TabsContent value="campaigns">
-          <CampaignBuilder />
-        </TabsContent>
+          <TabsContent value="loyalty">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Loyalty Tier Management</CardTitle>
+                  <CardDescription>Configure tier benefits and requirements</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Tier benefits management interface - configure benefits for each loyalty tier</p>
+                </CardContent>
+              </Card>
 
-        <TabsContent value="analytics">
-          <div className="mb-4">
-            <Button onClick={() => window.open('/analytics', '_blank')}>
-              Open Full Analytics Dashboard
-            </Button>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Analytics Preview</CardTitle>
-              <CardDescription>Open full dashboard for detailed insights</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Click the button above to view comprehensive analytics including activity heatmaps,
-                revenue trends, and player behavior patterns.
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Achievement Badges</CardTitle>
+                  <CardDescription>Create and manage achievement badges</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Achievement badges management - create badges and milestones for players</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Loyalty Points Rules</CardTitle>
+                  <CardDescription>Configure point earning and redemption rules</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Points configuration - set earning rates and redemption values</p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tournaments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tournament Director Tools</CardTitle>
+                <CardDescription>Manage brackets, results, and prize distributions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => window.location.href = '/tournament-management'} size="lg" className="w-full">
+                  <Trophy className="mr-2 h-5 w-5" />
+                  Open Tournament Management
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
         <TabsContent value="audit">
             <AuditLogsViewer />
