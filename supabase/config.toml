@@ -46,6 +46,9 @@ verify_jwt = true
 [functions.release-expired-holds]
 verify_jwt = false
 
+[functions.redeem-reward]
+verify_jwt = true
+
 [db]
 port = 54322
 shadow_port = 54320
