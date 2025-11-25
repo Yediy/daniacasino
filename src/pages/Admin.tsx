@@ -18,10 +18,12 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { StaffManagement } from "@/components/StaffManagement";
+import { MenuItemManagement } from "@/components/MenuItemManagement";
 import { AuditLogsViewer } from "@/components/AuditLogsViewer";
 import { EventManagement } from "@/components/EventManagement";
 import { VendorManagement } from "@/components/VendorManagement";
-import { MenuItemManagement } from "@/components/MenuItemManagement";
+import { CampaignBuilder } from "@/components/CampaignBuilder";
+import { AuthGuard } from "@/components/AuthGuard";
 
 interface UserProfile {
   id: string;
@@ -374,6 +376,10 @@ export const Admin = () => {
 
           <TabsContent value="menu">
             <MenuItemManagement />
+          </TabsContent>
+
+          <TabsContent value="campaigns">
+            <CampaignBuilder />
           </TabsContent>
 
           <TabsContent value="audit">
