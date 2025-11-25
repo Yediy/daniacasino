@@ -155,6 +155,13 @@ export default function Support() {
       toast({ title: "Error sending message", variant: "destructive" });
     } else {
       setNewMessage("");
+      
+      // Log activity
+      await supabase.from('player_activity_log').insert({
+        user_id: user.id,
+        activity_type: 'support_message_sent',
+        activity_data: { ticket_id: selectedTicket.id }
+      });
     }
   };
 

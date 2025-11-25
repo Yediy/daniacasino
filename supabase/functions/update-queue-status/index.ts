@@ -67,6 +67,24 @@ serve(async (req) => {
       case 'check_in':
         updateData.checkin_status = 'on_site';
         logStep("Checking in user on-site");
+        
+        // Send SMS notification if user has phone
+        if (queueEntry.profiles?.phone) {
+          const { data: listData } = await supabaseClient
+            .from('cash_game_lists')
+            .select('game')
+            .eq('id', queueEntry.list_id)
+            .single();
+
+          await supabaseClient.functions.invoke('send-sms', {
+            body: {
+              to: queueEntry.profiles.phone,
+              message: `Your seat at ${listData?.game || 'poker table'} is ready! Please check in within 15 minutes.`,
+              type: 'seat_available',
+              userId: user.id
+            }
+          });
+        }
         break;
       case 'leave_queue':
         // Remove from queue and update positions
