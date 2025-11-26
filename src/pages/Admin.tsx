@@ -28,6 +28,8 @@ import { TournamentPayouts } from "@/components/TournamentPayouts";
 import { TournamentBracketView } from "@/components/TournamentBracketView";
 import { TournamentLeaderboard } from "@/components/TournamentLeaderboard";
 import TournamentManagement from "@/pages/TournamentManagement";
+import { TournamentClock } from "@/components/TournamentClock";
+import { StreamingIntegration } from "@/components/StreamingIntegration";
 import { AuthGuard } from "@/components/AuthGuard";
 
 interface UserProfile {

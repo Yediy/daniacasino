@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AuthGuard } from "@/components/AuthGuard";
+import { PlayerEloRating } from "@/components/PlayerEloRating";
 
 interface PlayerStats {
   user_id: string;
@@ -35,6 +36,7 @@ interface PlayerStats {
 export default function PlayerAnalytics() {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -122,6 +124,8 @@ export default function PlayerAnalytics() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
+            {userId && <PlayerEloRating userId={userId} />}
+            
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 icon={Users}

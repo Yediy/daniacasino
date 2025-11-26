@@ -8,6 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Plus, Users, DollarSign, Calendar, Clock } from "lucide-react";
+import { TournamentClock } from "@/components/TournamentClock";
+import { TournamentBlindStructure } from "@/components/TournamentBlindStructure";
+import { StreamingIntegration } from "@/components/StreamingIntegration";
 
 interface Tournament {
   id: string;
@@ -311,18 +314,27 @@ export default function TournamentManagement() {
           </Card>
 
           {/* Tournament Details */}
-          <Card className="shadow-elegant">
-            <CardHeader>
-              <CardTitle>
-                {selectedTournament ? 'Registrations' : 'Select a Tournament'}
-              </CardTitle>
-              {selectedTournament && (
-                <CardDescription>
-                  {entries.length} players registered
-                </CardDescription>
-              )}
-            </CardHeader>
-            <CardContent>
+          <div className="space-y-6">
+            {selectedTournament && (
+              <>
+                <TournamentClock tourneyId={selectedTournament.id} />
+                <TournamentBlindStructure tourneyId={selectedTournament.id} />
+                <StreamingIntegration tourneyId={selectedTournament.id} />
+              </>
+            )}
+            
+            <Card className="shadow-elegant">
+              <CardHeader>
+                <CardTitle>
+                  {selectedTournament ? 'Registrations' : 'Select a Tournament'}
+                </CardTitle>
+                {selectedTournament && (
+                  <CardDescription>
+                    {entries.length} players registered
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
               {!selectedTournament ? (
                 <div className="text-center py-12 text-muted-foreground">
                   Select a tournament to view registrations
@@ -370,6 +382,7 @@ export default function TournamentManagement() {
               )}
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
     </div>
