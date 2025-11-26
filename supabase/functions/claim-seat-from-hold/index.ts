@@ -77,83 +77,33 @@ Deno.serve(async (req) => {
 
     console.log('Seat hold is valid, claiming seat:', hold.seat_no, 'at table:', hold.table_id);
 
-    // Check if the seat exists and is still reserved
-    const { data: seat, error: seatError } = await supabase
-      .from('poker_seats')
-      .select('*')
-      .eq('table_id', hold.table_id)
-      .eq('seat_no', hold.seat_no)
-      .maybeSingle();
+    // Use the claim_cash_seat database function for atomic seat claiming
+    // This function handles all the logic in a single transaction with proper locking
+    const { error: claimError } = await supabase.rpc('claim_cash_seat', {
+      p_table_id: hold.table_id,
+      p_seat_no: hold.seat_no,
+      p_user_id: user.id,
+      p_hold_id: validatedData.hold_id,
+    });
 
-    if (seatError) {
-      console.error('Error checking seat:', seatError);
-      throw new Error(`Failed to check seat: ${seatError.message}`);
-    }
+    if (claimError) {
+      console.error('Error claiming seat:', claimError);
+      
+      let errorMessage = 'Failed to claim seat';
+      let statusCode = 500;
+      
+      if (claimError.message?.includes('seat_not_found')) {
+        errorMessage = 'Seat not found';
+        statusCode = 404;
+      } else if (claimError.message?.includes('seat_not_available')) {
+        errorMessage = 'Seat is no longer available';
+        statusCode = 409;
+      }
 
-    if (!seat || seat.status !== 'reserved' || seat.user_id !== user.id) {
-      console.error('Seat is not reserved for this user');
       return new Response(
-        JSON.stringify({ error: 'Seat is no longer available' }),
-        { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: errorMessage }),
+        { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Update seat to occupied
-    const { error: updateError } = await supabase
-      .from('poker_seats')
-      .update({
-        status: 'occupied',
-        updated_at: new Date().toISOString(),
-      })
-      .eq('table_id', hold.table_id)
-      .eq('seat_no', hold.seat_no);
-
-    if (updateError) {
-      console.error('Error updating seat:', updateError);
-      throw new Error(`Failed to occupy seat: ${updateError.message}`);
-    }
-
-    // Also create entry in poker_table_players for backward compatibility
-    const { error: playerInsertError } = await supabase
-      .from('poker_table_players')
-      .upsert({
-        id: `${hold.table_id}-${hold.seat_no}`,
-        table_id: hold.table_id,
-        seat: hold.seat_no,
-        user_id: user.id,
-        status: 'active',
-        stack: 0,
-      }, { onConflict: 'id' });
-
-    if (playerInsertError) {
-      console.warn('Error creating player entry:', playerInsertError);
-    }
-
-    // Update poker table open seats count
-    const { data: table } = await supabase
-      .from('poker_tables')
-      .select('open_seats, players')
-      .eq('id', hold.table_id)
-      .single();
-
-    if (table) {
-      await supabase
-        .from('poker_tables')
-        .update({
-          open_seats: Math.max(0, (table.open_seats || 0) - 1),
-          players: (table.players || 0) + 1,
-        })
-        .eq('id', hold.table_id);
-    }
-
-    // Delete the seat hold
-    const { error: deleteError } = await supabase
-      .from('seat_holds')
-      .delete()
-      .eq('id', validatedData.hold_id);
-
-    if (deleteError) {
-      console.warn('Failed to delete seat hold:', deleteError);
     }
 
     // Remove user from queue if they're in it
@@ -164,29 +114,6 @@ Deno.serve(async (req) => {
       .eq('list_id', hold.table_id);
 
     console.log('Seat claimed successfully');
-
-    // Create notification
-    await supabase.rpc('create_notification', {
-      target_user_id: user.id,
-      notification_type: 'seat_claimed',
-      notification_title: 'Seat Claimed',
-      notification_message: `You have successfully claimed seat ${hold.seat_no} at table ${hold.table_id}.`,
-      ref_id: hold.table_id,
-      ref_type: 'poker_table',
-    });
-
-    // Log the action
-    await supabase.rpc('log_sensitive_action', {
-      action_type: 'seat_claimed',
-      resource_type: 'poker_seat',
-      resource_id: `${hold.table_id}-${hold.seat_no}`,
-      details: {
-        table_id: hold.table_id,
-        seat_no: hold.seat_no,
-        user_id: user.id,
-        hold_id: validatedData.hold_id,
-      },
-    });
 
     return new Response(
       JSON.stringify({
