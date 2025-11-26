@@ -1973,6 +1973,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_player_points: {
+        Args: {
+          p_admin_id: string
+          p_points_change: number
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      adjust_player_tier: {
+        Args: {
+          p_admin_id: string
+          p_new_tier: Database["public"]["Enums"]["user_role"]
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      calculate_tournament_payouts: {
+        Args: { p_prize_structure: Json; p_tourney_id: string }
+        Returns: Json
+      }
       check_user_permission: {
         Args: {
           required_role: Database["public"]["Enums"]["app_role"]

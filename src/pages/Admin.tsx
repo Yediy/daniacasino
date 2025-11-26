@@ -23,6 +23,7 @@ import { AuditLogsViewer } from "@/components/AuditLogsViewer";
 import { EventManagement } from "@/components/EventManagement";
 import { VendorManagement } from "@/components/VendorManagement";
 import { CampaignBuilder } from "@/components/CampaignBuilder";
+import { PlayerManagement } from "@/components/PlayerManagement";
 import { AuthGuard } from "@/components/AuthGuard";
 
 interface UserProfile {
@@ -381,37 +382,7 @@ export const Admin = () => {
           </TabsContent>
 
           <TabsContent value="loyalty">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Loyalty Tier Management</CardTitle>
-                  <CardDescription>Configure tier benefits and requirements</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Tier benefits management interface - configure benefits for each loyalty tier</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Achievement Badges</CardTitle>
-                  <CardDescription>Create and manage achievement badges</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Achievement badges management - create badges and milestones for players</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Loyalty Points Rules</CardTitle>
-                  <CardDescription>Configure point earning and redemption rules</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Points configuration - set earning rates and redemption values</p>
-                </CardContent>
-              </Card>
-            </div>
+            <PlayerManagement />
           </TabsContent>
 
           <TabsContent value="tournaments">

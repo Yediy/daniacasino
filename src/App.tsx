@@ -36,6 +36,7 @@ import PlayerDashboard from "@/pages/PlayerDashboard";
 import TournamentManagement from "@/pages/TournamentManagement";
 import TableManagement from "@/pages/TableManagement";
 import { RewardsShop } from "@/pages/RewardsShop";
+import PokerFloorDashboard from "@/pages/PokerFloorDashboard";
 import Support from "@/pages/Support";
 
 const queryClient = new QueryClient();
@@ -198,6 +199,11 @@ const App = () => {
     if (activeTab === "rewards") {
       if (!user) return <Auth />;
       return <RewardsShop />;
+    }
+
+    // Check for poker floor dashboard
+    if (activeTab === "poker-floor") {
+      return <PokerFloorDashboard />;
     }
 
     // Check for support
