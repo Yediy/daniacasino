@@ -13,6 +13,7 @@ import { SlotsLive } from "@/pages/SlotsLive";
 import { Header } from "@/components/Header";
 import { Navigation, NavigationTab } from "@/components/Navigation";
 import { MobileNavigation } from "@/components/MobileNavigation";
+import { WaitlistNotifications } from "@/components/WaitlistNotifications";
 import { Home } from "@/pages/Home";
 import { Poker } from "@/pages/Poker";
 import { Gaming } from "@/pages/Gaming";
@@ -37,6 +38,7 @@ import TournamentManagement from "@/pages/TournamentManagement";
 import TableManagement from "@/pages/TableManagement";
 import { RewardsShop } from "@/pages/RewardsShop";
 import PokerFloorDashboard from "@/pages/PokerFloorDashboard";
+import StaffQueue from "@/pages/StaffQueue";
 import Support from "@/pages/Support";
 
 const queryClient = new QueryClient();
@@ -206,6 +208,11 @@ const App = () => {
       return <PokerFloorDashboard />;
     }
 
+    // Check for staff queue management
+    if (activeTab === "staff-queue") {
+      return <StaffQueue />;
+    }
+
     // Check for support
     if (activeTab === "support") {
       return <Support />;
@@ -267,6 +274,7 @@ const App = () => {
           <main className="pb-20">
             {renderTabContent()}
           </main>
+          {user && <WaitlistNotifications />}
           <div className="block md:hidden">
             <MobileNavigation activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
