@@ -173,27 +173,33 @@ export type Database = {
         Row: {
           checkin_status: string | null
           created_at: string
+          estimated_wait_minutes: number | null
           hold_expires_at: string | null
           id: string
           list_id: string
+          notified_at: string | null
           position: number
           user_id: string
         }
         Insert: {
           checkin_status?: string | null
           created_at?: string
+          estimated_wait_minutes?: number | null
           hold_expires_at?: string | null
           id?: string
           list_id: string
+          notified_at?: string | null
           position: number
           user_id: string
         }
         Update: {
           checkin_status?: string | null
           created_at?: string
+          estimated_wait_minutes?: number | null
           hold_expires_at?: string | null
           id?: string
           list_id?: string
+          notified_at?: string | null
           position?: number
           user_id?: string
         }
@@ -1708,6 +1714,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tier_thresholds: {
+        Row: {
+          created_at: string | null
+          id: string
+          min_play_hours: number | null
+          min_points: number
+          min_sessions: number | null
+          tier: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          min_play_hours?: number | null
+          min_points: number
+          min_sessions?: number | null
+          tier: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          min_play_hours?: number | null
+          min_points?: number
+          min_sessions?: number | null
+          tier?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       time_entries: {
         Row: {
           break_end: string | null
@@ -1829,6 +1862,86 @@ export type Database = {
           },
           {
             foreignKeyName: "tournament_brackets_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_matches: {
+        Row: {
+          created_at: string | null
+          id: string
+          match_number: number
+          player1_id: string | null
+          player1_seed: number | null
+          player2_id: string | null
+          player2_seed: number | null
+          round_number: number
+          scheduled_time: string | null
+          status: string | null
+          table_id: string | null
+          tourney_id: string
+          updated_at: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          match_number: number
+          player1_id?: string | null
+          player1_seed?: number | null
+          player2_id?: string | null
+          player2_seed?: number | null
+          round_number: number
+          scheduled_time?: string | null
+          status?: string | null
+          table_id?: string | null
+          tourney_id: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          match_number?: number
+          player1_id?: string | null
+          player1_seed?: number | null
+          player2_id?: string | null
+          player2_seed?: number | null
+          round_number?: number
+          scheduled_time?: string | null
+          status?: string | null
+          table_id?: string | null
+          tourney_id?: string
+          updated_at?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_matches_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_winner_id_fkey"
             columns: ["winner_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -1995,6 +2108,8 @@ export type Database = {
         Args: { p_prize_structure: Json; p_tourney_id: string }
         Returns: Json
       }
+      calculate_wait_time: { Args: { p_list_id: string }; Returns: number }
+      check_tier_upgrade: { Args: { p_user_id: string }; Returns: undefined }
       check_user_permission: {
         Args: {
           required_role: Database["public"]["Enums"]["app_role"]
@@ -2035,6 +2150,10 @@ export type Database = {
       create_seat_hold: {
         Args: { p_queue_id: string; p_seat_no: number; p_table_id: string }
         Returns: string
+      }
+      generate_tournament_bracket: {
+        Args: { p_tourney_id: string }
+        Returns: Json
       }
       get_poker_tables_with_seats: {
         Args: never
@@ -2102,6 +2221,10 @@ export type Database = {
       redeem_ticket: { Args: { p_barcode: string }; Returns: Json }
       release_expired_seat_holds: { Args: never; Returns: number }
       sanitize_text: { Args: { input_text: string }; Returns: string }
+      update_queue_positions: {
+        Args: { p_list_id: string }
+        Returns: undefined
+      }
       update_slot_bank_aggregate: {
         Args: { p_bank: string; p_room: string }
         Returns: undefined

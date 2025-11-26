@@ -24,6 +24,7 @@ import { EventManagement } from "@/components/EventManagement";
 import { VendorManagement } from "@/components/VendorManagement";
 import { CampaignBuilder } from "@/components/CampaignBuilder";
 import { PlayerManagement } from "@/components/PlayerManagement";
+import { TournamentBracketView } from "@/components/TournamentBracketView";
 import { AuthGuard } from "@/components/AuthGuard";
 
 interface UserProfile {
@@ -386,18 +387,7 @@ export const Admin = () => {
           </TabsContent>
 
           <TabsContent value="tournaments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Tournament Director Tools</CardTitle>
-                <CardDescription>Manage brackets, results, and prize distributions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button onClick={() => window.location.href = '/tournament-management'} size="lg" className="w-full">
-                  <Trophy className="mr-2 h-5 w-5" />
-                  Open Tournament Management
-                </Button>
-              </CardContent>
-            </Card>
+            <TournamentBracketView />
           </TabsContent>
 
         <TabsContent value="audit">
