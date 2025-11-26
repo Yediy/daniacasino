@@ -24,7 +24,10 @@ import { EventManagement } from "@/components/EventManagement";
 import { VendorManagement } from "@/components/VendorManagement";
 import { CampaignBuilder } from "@/components/CampaignBuilder";
 import { PlayerManagement } from "@/components/PlayerManagement";
+import { TournamentPayouts } from "@/components/TournamentPayouts";
 import { TournamentBracketView } from "@/components/TournamentBracketView";
+import { TournamentLeaderboard } from "@/components/TournamentLeaderboard";
+import TournamentManagement from "@/pages/TournamentManagement";
 import { AuthGuard } from "@/components/AuthGuard";
 
 interface UserProfile {
@@ -387,7 +390,12 @@ export const Admin = () => {
           </TabsContent>
 
           <TabsContent value="tournaments">
-            <TournamentBracketView />
+            <div className="space-y-6">
+              <TournamentManagement />
+              <TournamentPayouts />
+              <TournamentBracketView />
+              <TournamentLeaderboard />
+            </div>
           </TabsContent>
 
         <TabsContent value="audit">
