@@ -309,6 +309,48 @@ export type Database = {
         }
         Relationships: []
       }
+      elo_history: {
+        Row: {
+          created_at: string
+          game_result: string
+          game_type: string
+          id: string
+          new_rating: number
+          old_rating: number
+          opponent_id: string | null
+          opponent_rating: number | null
+          rating_change: number
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_result: string
+          game_type: string
+          id?: string
+          new_rating: number
+          old_rating: number
+          opponent_id?: string | null
+          opponent_rating?: number | null
+          rating_change: number
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game_result?: string
+          game_type?: string
+          id?: string
+          new_rating?: number
+          old_rating?: number
+          opponent_id?: string | null
+          opponent_rating?: number | null
+          rating_change?: number
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       etg_tables: {
         Row: {
           floor_zone: string | null
@@ -1174,11 +1216,13 @@ export type Database = {
       profiles: {
         Row: {
           age_verified: boolean | null
+          cash_game_elo: number | null
           created_at: string
           dob: string | null
           email: string | null
           external_player_id: string | null
           full_name: string | null
+          games_played: number | null
           id: string
           kyc_status: string | null
           marketing_opt_in: boolean
@@ -1186,15 +1230,19 @@ export type Database = {
           phone: string | null
           points: number | null
           tier: Database["public"]["Enums"]["user_role"] | null
+          tournament_elo: number | null
+          tournaments_played: number | null
           updated_at: string
         }
         Insert: {
           age_verified?: boolean | null
+          cash_game_elo?: number | null
           created_at?: string
           dob?: string | null
           email?: string | null
           external_player_id?: string | null
           full_name?: string | null
+          games_played?: number | null
           id: string
           kyc_status?: string | null
           marketing_opt_in?: boolean
@@ -1202,15 +1250,19 @@ export type Database = {
           phone?: string | null
           points?: number | null
           tier?: Database["public"]["Enums"]["user_role"] | null
+          tournament_elo?: number | null
+          tournaments_played?: number | null
           updated_at?: string
         }
         Update: {
           age_verified?: boolean | null
+          cash_game_elo?: number | null
           created_at?: string
           dob?: string | null
           email?: string | null
           external_player_id?: string | null
           full_name?: string | null
+          games_played?: number | null
           id?: string
           kyc_status?: string | null
           marketing_opt_in?: boolean
@@ -1218,6 +1270,8 @@ export type Database = {
           phone?: string | null
           points?: number | null
           tier?: Database["public"]["Enums"]["user_role"] | null
+          tournament_elo?: number | null
+          tournaments_played?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -1904,6 +1958,44 @@ export type Database = {
           },
         ]
       }
+      tournament_clock_state: {
+        Row: {
+          created_at: string
+          current_level: number
+          is_break: boolean | null
+          is_paused: boolean | null
+          level_started_at: string | null
+          tourney_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_level?: number
+          is_break?: boolean | null
+          is_paused?: boolean | null
+          level_started_at?: string | null
+          tourney_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_level?: number
+          is_break?: boolean | null
+          is_paused?: boolean | null
+          level_started_at?: string | null
+          tourney_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_clock_state_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: true
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_matches: {
         Row: {
           created_at: string | null
@@ -2066,6 +2158,106 @@ export type Database = {
           },
         ]
       }
+      tournament_streams: {
+        Row: {
+          channel_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          platform: string
+          started_at: string | null
+          status: string | null
+          stream_key: string | null
+          stream_url: string
+          tourney_id: string
+          updated_at: string
+          viewer_count: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          platform: string
+          started_at?: string | null
+          status?: string | null
+          stream_key?: string | null
+          stream_url: string
+          tourney_id: string
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          platform?: string
+          started_at?: string | null
+          status?: string | null
+          stream_key?: string | null
+          stream_url?: string
+          tourney_id?: string
+          updated_at?: string
+          viewer_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_streams_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_structures: {
+        Row: {
+          ante: number | null
+          big_blind: number
+          break_duration_minutes: number | null
+          created_at: string
+          duration_minutes: number
+          id: string
+          is_break: boolean | null
+          level_number: number
+          small_blind: number
+          tourney_id: string
+        }
+        Insert: {
+          ante?: number | null
+          big_blind: number
+          break_duration_minutes?: number | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          is_break?: boolean | null
+          level_number: number
+          small_blind: number
+          tourney_id: string
+        }
+        Update: {
+          ante?: number | null
+          big_blind?: number
+          break_duration_minutes?: number | null
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          is_break?: boolean | null
+          level_number?: number
+          small_blind?: number
+          tourney_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_structures_tourney_id_fkey"
+            columns: ["tourney_id"]
+            isOneToOne: false
+            referencedRelation: "poker_tourneys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2190,6 +2382,15 @@ export type Database = {
         Returns: undefined
       }
       balance_poker_tables: { Args: { p_table_ids: string[] }; Returns: Json }
+      calculate_elo_change: {
+        Args: {
+          k_factor?: number
+          opponent_rating: number
+          player_rating: number
+          result: number
+        }
+        Returns: number
+      }
       calculate_tournament_payouts: {
         Args: { p_prize_structure: Json; p_tourney_id: string }
         Returns: Json
@@ -2296,6 +2497,10 @@ export type Database = {
         Args: { event_data: Json; target_user_id: string }
         Returns: undefined
       }
+      optimize_seat_assignments: {
+        Args: { p_player_ids: string[]; p_table_id: string }
+        Returns: Json
+      }
       process_order: {
         Args: { p_new_status: string; p_order_id: string; p_staff_id?: string }
         Returns: Json
@@ -2307,6 +2512,16 @@ export type Database = {
       redeem_ticket: { Args: { p_barcode: string }; Returns: Json }
       release_expired_seat_holds: { Args: never; Returns: number }
       sanitize_text: { Args: { input_text: string }; Returns: string }
+      update_player_elo: {
+        Args: {
+          p_game_type: string
+          p_opponent_id: string
+          p_reference_id?: string
+          p_result: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       update_queue_positions: {
         Args: { p_list_id: string }
         Returns: undefined
