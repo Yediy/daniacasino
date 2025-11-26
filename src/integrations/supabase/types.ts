@@ -1980,6 +1980,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_cash_seat: {
+        Args: {
+          p_hold_id: string
+          p_seat_no: number
+          p_table_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       create_notification: {
         Args: {
           notification_data?: Json
