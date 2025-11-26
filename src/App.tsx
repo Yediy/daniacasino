@@ -39,6 +39,8 @@ import TableManagement from "@/pages/TableManagement";
 import { RewardsShop } from "@/pages/RewardsShop";
 import PokerFloorDashboard from "@/pages/PokerFloorDashboard";
 import StaffQueue from "@/pages/StaffQueue";
+import RewardsKiosk from "@/pages/RewardsKiosk";
+import PlayerAnalytics from "@/pages/PlayerAnalytics";
 import Support from "@/pages/Support";
 
 const queryClient = new QueryClient();
@@ -211,6 +213,17 @@ const App = () => {
     // Check for staff queue management
     if (activeTab === "staff-queue") {
       return <StaffQueue />;
+    }
+
+    // Rewards kiosk
+    if (activeTab === "rewards-kiosk") {
+      return <RewardsKiosk />;
+    }
+
+    // Player analytics
+    if (activeTab === "player-analytics") {
+      if (!user) return <Auth />;
+      return <PlayerAnalytics />;
     }
 
     // Check for support

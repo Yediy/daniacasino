@@ -824,6 +824,13 @@ export type Database = {
             foreignKeyName: "player_achievements_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "player_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1016,6 +1023,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "poker_tables"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poker_seats_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "poker_seats_user_id_fkey"
@@ -1843,8 +1857,22 @@ export type Database = {
             foreignKeyName: "tournament_brackets_player1_id_fkey"
             columns: ["player1_id"]
             isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "tournament_brackets_player2_id_fkey"
@@ -1859,6 +1887,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "poker_tourneys"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_brackets_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "tournament_brackets_winner_id_fkey"
@@ -1923,8 +1958,22 @@ export type Database = {
             foreignKeyName: "tournament_matches_player1_id_fkey"
             columns: ["player1_id"]
             isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_player1_id_fkey"
+            columns: ["player1_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_player2_id_fkey"
+            columns: ["player2_id"]
+            isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "tournament_matches_player2_id_fkey"
@@ -1944,6 +1993,13 @@ export type Database = {
             foreignKeyName: "tournament_matches_winner_id_fkey"
             columns: ["winner_id"]
             isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tournament_matches_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1952,6 +2008,7 @@ export type Database = {
       tournament_standings: {
         Row: {
           created_at: string
+          current_chips: number | null
           eliminated_at: string | null
           final_chips: number | null
           id: string
@@ -1963,6 +2020,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          current_chips?: number | null
           eliminated_at?: string | null
           final_chips?: number | null
           id?: string
@@ -1974,6 +2032,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          current_chips?: number | null
           eliminated_at?: string | null
           final_chips?: number | null
           id?: string
@@ -1990,6 +2049,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "poker_tourneys"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_standings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "player_performance_stats"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "tournament_standings_user_id_fkey"
@@ -2083,7 +2149,26 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      player_performance_stats: {
+        Row: {
+          avg_session_hours: number | null
+          best_tournament_rank: number | null
+          losses: number | null
+          name: string | null
+          points: number | null
+          tier: Database["public"]["Enums"]["user_role"] | null
+          total_games: number | null
+          total_profit_loss: number | null
+          total_sessions: number | null
+          total_tournament_winnings: number | null
+          tournaments_entered: number | null
+          tournaments_finished: number | null
+          user_id: string | null
+          win_rate_percentage: number | null
+          wins: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       adjust_player_points: {
@@ -2104,6 +2189,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      balance_poker_tables: { Args: { p_table_ids: string[] }; Returns: Json }
       calculate_tournament_payouts: {
         Args: { p_prize_structure: Json; p_tourney_id: string }
         Returns: Json

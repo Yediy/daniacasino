@@ -27,6 +27,8 @@ interface CashGameList {
   table_max: number;
 }
 
+import { TableBalancing } from "@/components/TableBalancing";
+
 export default function PokerFloorDashboard() {
   const [tables, setTables] = useState<PokerTable[]>([]);
   const [cashGames, setCashGames] = useState<CashGameList[]>([]);
@@ -166,6 +168,9 @@ export default function PokerFloorDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Table Balancing Tool */}
+      <TableBalancing />
 
       {/* Live Tables */}
       <Card>
