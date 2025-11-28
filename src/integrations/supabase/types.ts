@@ -2442,6 +2442,10 @@ export type Database = {
         Args: { p_tourney_id: string }
         Returns: Json
       }
+      get_financial_transactions_with_audit: {
+        Args: { p_limit?: number; p_table_name: string }
+        Returns: Json
+      }
       get_poker_tables_with_seats: {
         Args: never
         Returns: {
