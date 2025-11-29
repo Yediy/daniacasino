@@ -16,15 +16,49 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get authenticated user
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
+    // SECURITY: Authenticate the caller
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('Missing Authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      throw new Error('Unauthorized');
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    console.log(`Authenticated user: ${user.id}`);
+
+    // SECURITY: Authorize - only Staff or Admin can reserve seats
+    const { data: isStaff } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'Staff'
+    });
+
+    const { data: isAdmin } = await supabase.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'Admin'
+    });
+
+    if (!isStaff && !isAdmin) {
+      console.error(`User ${user.id} attempted seat reservation without Staff/Admin role`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Staff or Admin role required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`User ${user.id} authorized as ${isAdmin ? 'Admin' : 'Staff'}`);
 
     const { queueId, seatNo, tableId } = await req.json();
 
