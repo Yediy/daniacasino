@@ -20,6 +20,7 @@ import { Gaming } from "@/pages/Gaming";
 import { GamingLive } from "@/pages/GamingLive";
 import { PokerLive } from "@/pages/PokerLive";
 import { KitchenDashboard } from "@/pages/KitchenDashboard";
+import { KitchenDisplaySystem } from "@/pages/KitchenDisplaySystem";
 import { StaffHeatmap } from "@/pages/StaffHeatmap";
 import { DiningEnhanced } from "@/pages/DiningEnhanced";
 import { Dining } from "@/pages/Dining";
@@ -141,6 +142,11 @@ const App = () => {
     // Check for kitchen dashboard access
     if (activeTab === "kitchen") {
       return <KitchenDashboard />;
+    }
+
+    // Check for KDS (large monitor display)
+    if (activeTab === "kds") {
+      return <KitchenDisplaySystem />;
     }
 
     // Check for staff heatmap access
