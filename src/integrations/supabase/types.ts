@@ -2516,6 +2516,10 @@ export type Database = {
       redeem_ticket: { Args: { p_barcode: string }; Returns: Json }
       release_expired_seat_holds: { Args: never; Returns: number }
       sanitize_text: { Args: { input_text: string }; Returns: string }
+      set_staff_pin: {
+        Args: { p_pin: string; p_staff_id: string }
+        Returns: boolean
+      }
       update_player_elo: {
         Args: {
           p_game_type: string
@@ -2533,6 +2537,10 @@ export type Database = {
       update_slot_bank_aggregate: {
         Args: { p_bank: string; p_room: string }
         Returns: undefined
+      }
+      verify_staff_pin: {
+        Args: { p_pin: string; p_staff_id: string }
+        Returns: boolean
       }
     }
     Enums: {
