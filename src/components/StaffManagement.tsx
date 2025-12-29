@@ -22,16 +22,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { UserPlus, Edit, Trash2, Key } from "lucide-react";
+import { UserPlus, Edit, Trash2, Key, ShieldCheck, Eye, EyeOff } from "lucide-react";
 
 interface StaffMember {
   id: string;
   full_name: string;
   email: string | null;
   role: string;
-  pin_code: string | null;
   created_at: string;
   auth_user_id: string | null;
+  has_pin: boolean;
 }
 
 export const StaffManagement = () => {
@@ -44,7 +44,13 @@ export const StaffManagement = () => {
     pin_code: ""
   });
   const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [newPinForEdit, setNewPinForEdit] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPinResetDialogOpen, setIsPinResetDialogOpen] = useState(false);
+  const [staffForPinReset, setStaffForPinReset] = useState<StaffMember | null>(null);
+  const [resetPin, setResetPin] = useState("");
+  const [showNewPin, setShowNewPin] = useState(false);
+  const [generatedPin, setGeneratedPin] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,11 +61,23 @@ export const StaffManagement = () => {
     try {
       const { data, error } = await supabase
         .from('staff')
-        .select('*')
+        .select('id, full_name, email, role, created_at, auth_user_id, pin_code')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStaff(data || []);
+      
+      // Transform data to hide actual pin_code but indicate if one exists
+      const transformedData = (data || []).map(member => ({
+        id: member.id,
+        full_name: member.full_name,
+        email: member.email,
+        role: member.role,
+        created_at: member.created_at,
+        auth_user_id: member.auth_user_id,
+        has_pin: !!member.pin_code
+      }));
+      
+      setStaff(transformedData);
     } catch (error) {
       console.error('Error fetching staff:', error);
       toast({
@@ -89,21 +107,41 @@ export const StaffManagement = () => {
     try {
       const pin = newStaff.pin_code || generatePIN();
 
-      const { error } = await supabase
+      // First create the staff member without PIN
+      const { data: createdStaff, error: insertError } = await supabase
         .from('staff')
         .insert({
           full_name: newStaff.full_name,
           email: newStaff.email || null,
-          role: newStaff.role,
-          pin_code: pin
-        });
+          role: newStaff.role
+        })
+        .select('id')
+        .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      toast({
-        title: "Staff Member Created",
-        description: `${newStaff.full_name} has been added with PIN: ${pin}`,
+      // Then set the PIN using the secure RPC function
+      const { error: pinError } = await supabase.rpc('set_staff_pin', {
+        p_staff_id: createdStaff.id,
+        p_pin: pin
       });
+
+      if (pinError) {
+        // If PIN setting fails, still show success but warn about PIN
+        console.error('Error setting PIN:', pinError);
+        toast({
+          title: "Staff Created (PIN Issue)",
+          description: `${newStaff.full_name} has been added but PIN could not be set. Please reset their PIN.`,
+          variant: "destructive",
+        });
+      } else {
+        // Show the generated PIN one time only
+        setGeneratedPin(pin);
+        toast({
+          title: "Staff Member Created",
+          description: `${newStaff.full_name} has been added. PIN is displayed below - save it now as it cannot be viewed again.`,
+        });
+      }
 
       setNewStaff({ full_name: "", email: "", role: "staff_floor", pin_code: "" });
       setIsDialogOpen(false);
@@ -127,25 +165,84 @@ export const StaffManagement = () => {
         .update({
           full_name: editingStaff.full_name,
           email: editingStaff.email,
-          role: editingStaff.role,
-          pin_code: editingStaff.pin_code
+          role: editingStaff.role
         })
         .eq('id', editingStaff.id);
 
       if (error) throw error;
 
-      toast({
-        title: "Staff Updated",
-        description: "Staff member information updated successfully",
-      });
+      // If a new PIN was provided, update it securely
+      if (newPinForEdit && newPinForEdit.length === 4) {
+        const { error: pinError } = await supabase.rpc('set_staff_pin', {
+          p_staff_id: editingStaff.id,
+          p_pin: newPinForEdit
+        });
+
+        if (pinError) {
+          console.error('Error updating PIN:', pinError);
+          toast({
+            title: "Staff Updated (PIN Issue)",
+            description: "Staff info updated but PIN change failed.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Staff Updated",
+            description: "Staff member information and PIN updated successfully",
+          });
+        }
+      } else {
+        toast({
+          title: "Staff Updated",
+          description: "Staff member information updated successfully",
+        });
+      }
 
       setEditingStaff(null);
+      setNewPinForEdit("");
       fetchStaff();
     } catch (error) {
       console.error('Error updating staff:', error);
       toast({
         title: "Error",
         description: "Failed to update staff member",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResetPin = async () => {
+    if (!staffForPinReset || !resetPin || resetPin.length !== 4) {
+      toast({
+        title: "Validation Error",
+        description: "PIN must be exactly 4 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('set_staff_pin', {
+        p_staff_id: staffForPinReset.id,
+        p_pin: resetPin
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "PIN Reset Successfully",
+        description: `PIN for ${staffForPinReset.full_name} has been updated.`,
+      });
+
+      setIsPinResetDialogOpen(false);
+      setStaffForPinReset(null);
+      setResetPin("");
+      fetchStaff();
+    } catch (error) {
+      console.error('Error resetting PIN:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reset PIN. Make sure you have admin privileges.",
         variant: "destructive",
       });
     }
@@ -195,10 +292,89 @@ export const StaffManagement = () => {
 
   return (
     <div className="space-y-6">
+      {/* One-time PIN display dialog */}
+      <Dialog open={!!generatedPin} onOpenChange={() => setGeneratedPin(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-green-500" />
+              Staff PIN Created
+            </DialogTitle>
+            <DialogDescription>
+              This PIN will only be shown once. Please save it securely.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 text-center">
+            <div className="text-4xl font-mono font-bold tracking-wider bg-muted p-4 rounded-lg">
+              {generatedPin}
+            </div>
+            <p className="text-sm text-muted-foreground mt-4">
+              Write this PIN down and give it to the staff member securely.
+              It cannot be viewed again after closing this dialog.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setGeneratedPin(null)}>
+              I've Saved the PIN
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* PIN Reset Dialog */}
+      <Dialog open={isPinResetDialogOpen} onOpenChange={setIsPinResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset PIN for {staffForPinReset?.full_name}</DialogTitle>
+            <DialogDescription>
+              Enter a new 4-digit PIN for this staff member.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset_pin">New PIN (4 digits)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="reset_pin"
+                  type={showNewPin ? "text" : "password"}
+                  value={resetPin}
+                  onChange={(e) => setResetPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="Enter 4-digit PIN"
+                  maxLength={4}
+                  className="font-mono"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowNewPin(!showNewPin)}
+                >
+                  {showNewPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={() => setResetPin(generatePIN())}
+                >
+                  <Key className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setIsPinResetDialogOpen(false);
+              setStaffForPinReset(null);
+              setResetPin("");
+            }}>Cancel</Button>
+            <Button onClick={handleResetPin} disabled={resetPin.length !== 4}>Reset PIN</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Staff Management</h2>
-          <p className="text-muted-foreground">Manage staff accounts, roles, and PINs</p>
+          <p className="text-muted-foreground">Manage staff accounts and roles. PINs are securely hashed.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -212,7 +388,7 @@ export const StaffManagement = () => {
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
               <DialogDescription>
-                Create a new staff account with role and PIN
+                Create a new staff account with role and PIN. The PIN will be shown once after creation.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -255,11 +431,20 @@ export const StaffManagement = () => {
                 <div className="flex gap-2">
                   <Input
                     id="pin_code"
+                    type={showNewPin ? "text" : "password"}
                     value={newStaff.pin_code}
-                    onChange={(e) => setNewStaff({...newStaff, pin_code: e.target.value})}
+                    onChange={(e) => setNewStaff({...newStaff, pin_code: e.target.value.replace(/\D/g, '').slice(0, 4)})}
                     placeholder="Auto-generated if empty"
                     maxLength={4}
+                    className="font-mono"
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowNewPin(!showNewPin)}
+                  >
+                    {showNewPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
                   <Button 
                     type="button" 
                     variant="outline"
@@ -268,6 +453,9 @@ export const StaffManagement = () => {
                     <Key className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for auto-generated PIN. PIN will only be shown once after creation.
+                </p>
               </div>
             </div>
             <DialogFooter>
@@ -293,9 +481,14 @@ export const StaffManagement = () => {
                   <Badge variant={getRoleBadgeColor(member.role)}>
                     {member.role.replace('_', ' ')}
                   </Badge>
-                  {member.pin_code && (
-                    <Badge variant="outline" className="font-mono">
-                      PIN: {member.pin_code}
+                  {member.has_pin ? (
+                    <Badge variant="outline" className="text-green-600 border-green-600">
+                      <ShieldCheck className="h-3 w-3 mr-1" />
+                      PIN Set
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-amber-600 border-amber-600">
+                      No PIN
                     </Badge>
                   )}
                 </div>
@@ -307,12 +500,28 @@ export const StaffManagement = () => {
                   Added {new Date(member.created_at).toLocaleDateString()}
                 </div>
                 <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setStaffForPinReset(member);
+                      setResetPin("");
+                      setIsPinResetDialogOpen(true);
+                    }}
+                    title="Reset PIN"
+                  >
+                    <Key className="h-4 w-4" />
+                  </Button>
+                  
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => setEditingStaff(member)}
+                        onClick={() => {
+                          setEditingStaff(member);
+                          setNewPinForEdit("");
+                        }}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -320,6 +529,9 @@ export const StaffManagement = () => {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Edit Staff Member</DialogTitle>
+                        <DialogDescription>
+                          Update staff information. Leave PIN empty to keep current PIN.
+                        </DialogDescription>
                       </DialogHeader>
                       {editingStaff && (
                         <div className="space-y-4 py-4">
@@ -357,17 +569,23 @@ export const StaffManagement = () => {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label>PIN Code</Label>
+                            <Label>New PIN (leave empty to keep current)</Label>
                             <Input
-                              value={editingStaff.pin_code || ""}
-                              onChange={(e) => setEditingStaff({...editingStaff, pin_code: e.target.value})}
+                              type="password"
+                              value={newPinForEdit}
+                              onChange={(e) => setNewPinForEdit(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                              placeholder="Enter new 4-digit PIN"
                               maxLength={4}
+                              className="font-mono"
                             />
                           </div>
                         </div>
                       )}
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditingStaff(null)}>Cancel</Button>
+                        <Button variant="outline" onClick={() => {
+                          setEditingStaff(null);
+                          setNewPinForEdit("");
+                        }}>Cancel</Button>
                         <Button onClick={handleUpdateStaff}>Save Changes</Button>
                       </DialogFooter>
                     </DialogContent>
